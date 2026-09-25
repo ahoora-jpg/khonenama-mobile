@@ -27,6 +27,13 @@
     "plugins": [
       "expo-router",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "213e1c29-f131-4b49-b9a5-faf0a61eae63"
+      }
+    },
+    "owner": "ahoora1981"
   }
 }
