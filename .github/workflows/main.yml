@@ -6,10 +6,23 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      NODE_ENV: production
+      CI: true
 
     steps:
       - name: دریافت کد
         uses: actions/checkout@v4
+
+      - name: آزادسازی فضای Runner
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h
 
       - name: نصب Node.js
         uses: actions/setup-node@v4
@@ -27,16 +40,23 @@ jobs:
         run: npm ci
 
       - name: ساخت پروژه Android
-        run: npx expo prebuild --platform android --non-interactive
+        run: npx expo prebuild --platform android --non-interactive --clean
 
-      - name: صدور مجوز اجرای Gradle
+      - name: مجوز اجرای Gradle
         run: chmod +x android/gradlew
 
-      - name: ساخت APK
-        run: cd android && ./gradlew assembleDebug
+      - name: ساخت APK سبک
+        working-directory: android
+        run: |
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            -PreactNativeArchitectures=arm64-v8a
 
       - name: ذخیره APK
         uses: actions/upload-artifact@v4
         with:
           name: khonenama-android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
