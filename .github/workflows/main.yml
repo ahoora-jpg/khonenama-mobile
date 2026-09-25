@@ -1,0 +1,42 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v4
+
+      - name: نصب Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: نصب Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: نصب وابستگی‌ها
+        run: npm ci
+
+      - name: ساخت پروژه Android
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: صدور مجوز اجرای Gradle
+        run: chmod +x android/gradlew
+
+      - name: ساخت APK
+        run: cd android && ./gradlew assembleDebug
+
+      - name: ذخیره APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: khonenama-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
