@@ -3,6 +3,9 @@ name: Build Android APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -42,7 +45,7 @@ jobs:
       - name: ساخت پروژه Android
         run: npx expo prebuild --platform android --non-interactive --clean
 
-      - name: مجوز اجرای Gradle
+      - name: صدور مجوز اجرای Gradle
         run: chmod +x android/gradlew
 
       - name: ساخت APK سبک
@@ -53,10 +56,11 @@ jobs:
             --stacktrace \
             -PreactNativeArchitectures=arm64-v8a
 
-      - name: ذخیره APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: khonenama-android-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 7
+      - name: انتشار APK برای دانلود
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-${{ github.run_number }}" \
+            "android/app/build/outputs/apk/debug/app-debug.apk#khonenama.apk" \
+            --title "Khonenama Android APK - Build ${{ github.run_number }}" \
+            --notes "نسخه آزمایشی قابل نصب اپلیکیشن خونه‌نما"
