@@ -35,8 +35,8 @@ export default function HomeScreen() {
         </View>
         <View style={styles.businessBanner}>
           <Text style={styles.bannerTitle}>صاحب کسب‌وکار هستی؟</Text>
-          <Text style={styles.bannerCopy}>پروفایل حرفه‌ای بساز و نمونه‌کارت را به مشتریان محلی نشان بده.</Text>
-          <Text style={styles.bannerHint}>ورود و مدیریت کسب‌وکار در فاز بعدی اپ فعال می‌شود.</Text>
+          <Text style={styles.bannerCopy}>در همین اپ درخواست‌ها، پیام‌ها و پروفایل کسب‌وکارت را مدیریت کن.</Text>
+          <Pressable style={styles.ownerButton} onPress={() => router.push("/owner")}><Text style={styles.ownerButtonText}>ورود به پنل کسب‌وکار</Text></Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -57,5 +57,6 @@ const styles = StyleSheet.create({
   category: { width: "47%", minHeight: 105, backgroundColor: colors.white, borderRadius: 20, padding: 16, justifyContent: "space-between", borderWidth: 1, borderColor: colors.line },
   categoryIcon: { fontSize: 27, color: colors.green, textAlign: "right" }, categoryLabel: { fontSize: 16, color: colors.ink, fontWeight: "800", textAlign: "right" },
   businessBanner: { marginTop: 28, backgroundColor: colors.white, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: colors.line },
-  bannerTitle: { fontSize: 20, fontWeight: "900", color: colors.ink, textAlign: "right" }, bannerCopy: { color: colors.muted, lineHeight: 23, textAlign: "right", marginTop: 8 }, bannerHint: { color: colors.green, textAlign: "right", fontSize: 12, marginTop: 12, fontWeight: "700" },
+  bannerTitle: { fontSize: 20, fontWeight: "900", color: colors.ink, textAlign: "right" }, bannerCopy: { color: colors.muted, lineHeight: 23, textAlign: "right", marginTop: 8 },
+  ownerButton: { marginTop: 16, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.greenSoft }, ownerButtonText: { color: colors.green, fontWeight: "900" },
 });
