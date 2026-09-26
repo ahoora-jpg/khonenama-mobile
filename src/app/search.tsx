@@ -5,6 +5,7 @@ import { searchBusinesses } from "../api/client";
 import { BusinessCard } from "../components/BusinessCard";
 import { colors } from "../theme";
 import type { BusinessSummary } from "../types";
+import { ScreenState } from "../components/ScreenState";
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string; location?: string; category?: string }>();
@@ -37,7 +38,7 @@ export default function SearchScreen() {
         <TextInput value={location} onChangeText={setLocation} placeholder="شهر یا محله" style={styles.input} textAlign="right" returnKeyType="search" onSubmitEditing={load} />
         <Pressable style={styles.button} onPress={load}><Text style={styles.buttonText}>جست‌وجو</Text></Pressable>
       </View>
-      {loading ? <ActivityIndicator color={colors.green} size="large" style={styles.center} /> : error ? <Text style={styles.message}>{error}</Text> : (
+      {loading ? <ActivityIndicator color={colors.green} size="large" style={styles.center} /> : error ? <ScreenState title="ارتباط برقرار نشد" message={error} onRetry={load} /> : (
         <FlatList data={items} keyExtractor={(item) => item.slug} renderItem={({ item }) => <BusinessCard business={item} />} contentContainerStyle={styles.list} ListHeaderComponent={<Text style={styles.count}>{items.length} نتیجه</Text>} ListEmptyComponent={<Text style={styles.message}>هنوز کسب‌وکاری با این مشخصات پیدا نشد.</Text>} />
       )}
     </View>
