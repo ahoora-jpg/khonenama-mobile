@@ -1,0 +1,27 @@
+name: Barber SaaS CI
+
+on:
+  push:
+    branches: [barber-saas-bootstrap]
+    paths:
+      - 'barber-saas/**'
+      - '.github/workflows/barber-saas-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: barber-saas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: barber-saas/package.json
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npx expo-doctor

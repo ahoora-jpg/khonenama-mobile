@@ -1,17 +1,88 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { bookAppointment, getAvailableSlots, type AvailableSlot } from '@/src/data/booking';
+import { getDefaultSalon, getSalonServices, getSalonStaff } from '@/src/data/catalog';
+import { formatPersianDate, formatPersianTime } from '@/src/lib/date';
+import { isSupabaseConfigured, supabase } from '@/src/lib/supabase';
+import type { Salon, Service, Staff } from '@/src/types';
 
-const services = [
-  { id: 'hair', name: 'اصلاح مو', duration: 45 },
-  { id: 'beard', name: 'اصلاح ریش', duration: 30 },
-  { id: 'combo', name: 'اصلاح مو و ریش', duration: 60 }
-];
-const slots = ['09:00', '10:00', '11:30', '14:00', '15:30', '17:00'];
+function isoDay(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 export default function BookingScreen() {
+  const [salon, setSalon] = useState<Salon | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [slot, setSlot] = useState<string | null>(null);
-  const service = useMemo(() => services.find((item) => item.id === serviceId), [serviceId]);
+  const [staffId, setStaffId] = useState<string | null>(null);
+  const [day, setDay] = useState(isoDay(new Date(Date.now() + 24 * 60 * 60 * 1000)));
+  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const [startAt, setStartAt] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const days = useMemo(() => Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() + index);
+    return { value: isoDay(date), label: formatPersianDate(date) };
+  }), []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    (async () => {
+      try {
+        const currentSalon = await getDefaultSalon();
+        if (!currentSalon) return;
+        setSalon(currentSalon);
+        const [serviceRows, staffRows] = await Promise.all([
+          getSalonServices(currentSalon.id),
+          getSalonStaff(currentSalon.id)
+        ]);
+        setServices(serviceRows);
+        setStaff(staffRows);
+        setServiceId(serviceRows[0]?.id ?? null);
+        setStaffId(staffRows[0]?.id ?? null);
+      } catch (error) {
+        Alert.alert('خطا در دریافت اطلاعات', error instanceof Error ? error.message : 'خطای نامشخص');
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    setStartAt(null);
+    if (!salon || !serviceId || !staffId || !isSupabaseConfigured) return;
+    (async () => {
+      try {
+        const result = await getAvailableSlots({ salonId: salon.id, staffId, serviceId, day });
+        setSlots(result);
+      } catch (error) {
+        setSlots([]);
+        Alert.alert('خطا در زمان‌های آزاد', error instanceof Error ? error.message : 'خطای نامشخص');
+      }
+    })();
+  }, [salon, serviceId, staffId, day]);
+
+  async function confirmBooking() {
+    if (!salon || !serviceId || !staffId || !startAt) return;
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return Alert.alert('ورود لازم است', 'برای ثبت نهایی نوبت ابتدا وارد حساب کاربری شوید.');
+    setBusy(true);
+    try {
+      await bookAppointment({ salonId: salon.id, staffId, serviceId, startAt });
+      Alert.alert('نوبت ثبت شد', 'درخواست شما با وضعیت «در انتظار تأیید» ثبت شد.');
+      setStartAt(null);
+      const result = await getAvailableSlots({ salonId: salon.id, staffId, serviceId, day });
+      setSlots(result);
+    } catch (error) {
+      Alert.alert('ثبت نوبت انجام نشد', error instanceof Error ? error.message : 'این زمان دیگر در دسترس نیست.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!isSupabaseConfigured) {
+    return <Message text="برای فعال شدن رزرو واقعی، مقادیر Supabase را در .env تنظیم کنید. اسکیمای امن رزرو داخل supabase/migrations آماده است." />;
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -20,35 +91,46 @@ export default function BookingScreen() {
         {services.map((item) => (
           <Pressable key={item.id} onPress={() => setServiceId(item.id)} style={[styles.card, serviceId === item.id && styles.selected]}>
             <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.meta}>{item.duration} دقیقه</Text>
+            <Text style={styles.meta}>{item.duration_minutes} دقیقه</Text>
           </Pressable>
         ))}
 
-        <Text style={styles.step}>۲. انتخاب ساعت</Text>
-        <View style={styles.slotGrid}>
-          {slots.map((item) => (
-            <Pressable key={item} onPress={() => setSlot(item)} style={[styles.slot, slot === item && styles.slotSelected]}>
-              <Text style={[styles.slotText, slot === item && styles.slotTextSelected]}>{item}</Text>
+        <Text style={styles.step}>۲. انتخاب آرایشگر</Text>
+        <View style={styles.wrap}>
+          {staff.map((item) => (
+            <Pressable key={item.id} onPress={() => setStaffId(item.id)} style={[styles.choice, staffId === item.id && styles.choiceSelected]}>
+              <Text style={staffId === item.id ? styles.choiceTextSelected : styles.choiceText}>{item.display_name}</Text>
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.summary}>
-          <Text style={styles.summaryTitle}>خلاصه نوبت</Text>
-          <Text style={styles.summaryText}>خدمت: {service?.name ?? 'انتخاب نشده'}</Text>
-          <Text style={styles.summaryText}>ساعت: {slot ?? 'انتخاب نشده'}</Text>
+        <Text style={styles.step}>۳. انتخاب روز</Text>
+        {days.map((item) => (
+          <Pressable key={item.value} onPress={() => setDay(item.value)} style={[styles.day, day === item.value && styles.selected]}>
+            <Text style={styles.dayText}>{item.label}</Text>
+          </Pressable>
+        ))}
+
+        <Text style={styles.step}>۴. انتخاب ساعت</Text>
+        <View style={styles.wrap}>
+          {slots.map((item) => (
+            <Pressable key={item.start_at} onPress={() => setStartAt(item.start_at)} style={[styles.slot, startAt === item.start_at && styles.slotSelected]}>
+              <Text style={startAt === item.start_at ? styles.choiceTextSelected : styles.choiceText}>{formatPersianTime(item.start_at)}</Text>
+            </Pressable>
+          ))}
+          {slots.length === 0 && <Text style={styles.empty}>برای این روز زمان آزادی پیدا نشد.</Text>}
         </View>
 
-        <Pressable
-          style={[styles.confirm, (!service || !slot) && styles.disabled]}
-          disabled={!service || !slot}
-          onPress={() => Alert.alert('مرحله بعد', 'در مرحله بعد این دکمه به RPC رزرو امن Supabase متصل می‌شود.')}
-        >
-          <Text style={styles.confirmText}>ثبت نوبت</Text>
+        <Pressable style={[styles.confirm, (!startAt || busy) && styles.disabled]} disabled={!startAt || busy} onPress={confirmBooking}>
+          <Text style={styles.confirmText}>{busy ? 'در حال ثبت...' : 'ثبت نوبت'}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function Message({ text }: { text: string }) {
+  return <SafeAreaView style={styles.safe}><View style={styles.message}><Text style={styles.messageText}>{text}</Text></View></SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
@@ -59,15 +141,19 @@ const styles = StyleSheet.create({
   selected: { borderColor: '#111', borderWidth: 2 },
   cardTitle: { fontWeight: '700' },
   meta: { color: '#777' },
-  slotGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  wrap: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  choice: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E4E4DE' },
+  choiceSelected: { backgroundColor: '#111', borderColor: '#111' },
+  choiceText: { color: '#222' },
+  choiceTextSelected: { color: '#fff' },
+  day: { backgroundColor: '#fff', borderRadius: 14, padding: 13, borderWidth: 1, borderColor: '#E8E8E2' },
+  dayText: { textAlign: 'right', color: '#222' },
   slot: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E4E4DE' },
   slotSelected: { backgroundColor: '#111', borderColor: '#111' },
-  slotText: { color: '#222' },
-  slotTextSelected: { color: '#fff' },
-  summary: { backgroundColor: '#EFEFEA', borderRadius: 18, padding: 16, gap: 7, marginTop: 12 },
-  summaryTitle: { textAlign: 'right', fontWeight: '800' },
-  summaryText: { textAlign: 'right', color: '#555' },
-  confirm: { backgroundColor: '#111', borderRadius: 14, padding: 15, marginTop: 6 },
+  empty: { textAlign: 'right', color: '#777', paddingVertical: 8 },
+  confirm: { backgroundColor: '#111', borderRadius: 14, padding: 15, marginTop: 12 },
   disabled: { opacity: 0.35 },
-  confirmText: { color: '#fff', textAlign: 'center', fontWeight: '800' }
+  confirmText: { color: '#fff', textAlign: 'center', fontWeight: '800' },
+  message: { margin: 20, backgroundColor: '#FFF2CC', padding: 18, borderRadius: 16 },
+  messageText: { textAlign: 'right', lineHeight: 24, color: '#554400' }
 });
