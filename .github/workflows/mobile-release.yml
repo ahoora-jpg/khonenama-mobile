@@ -15,7 +15,7 @@ jobs:
       CI: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Free runner disk space
         run: |
@@ -23,13 +23,14 @@ jobs:
           df -h
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -46,17 +47,37 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
+      - name: Configure production signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/khonenama-production.jks
+          node scripts/configure-android-signing.mjs
+
       - name: Build standalone release APK
         working-directory: android
+        env:
+          KHONENAMA_STORE_FILE: khonenama-production.jks
+          KHONENAMA_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KHONENAMA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KHONENAMA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon --stacktrace -PreactNativeArchitectures=arm64-v8a
 
       - name: Prepare release file
-        run: cp android/app/build/outputs/apk/release/app-release.apk khonenama.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk khonenama-production.apk
+
+      - name: Verify production signature
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs khonenama-production.apk | tee signature.txt
+          grep -qi '451f3fe27480d2e5ea49035e43343c03380a1aa302f2e9d9ce5017e3f3ffee8d' signature.txt
 
       - name: Publish APK to GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "mobile-${{ github.run_number }}" khonenama.apk \
+          gh release create "mobile-${{ github.run_number }}" khonenama-production.apk \
             --title "Khonenama Android ${{ github.run_number }}" \
-            --notes "Standalone release APK. This test build uses the generated debug signing configuration; create a protected production keystore before store distribution."
+            --notes "Production-signed standalone APK for ir.khonenama.app. Certificate SHA-256: 45:1F:3F:E2:74:80:D2:E5:EA:49:03:5E:43:34:3C:03:38:0A:1A:A3:02:F2:E9:D9:CE:50:17:E3:F3:FF:EE:8D"
