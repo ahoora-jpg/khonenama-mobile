@@ -1,28 +1,36 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { apiRequest } from "../../api/client";
+import { useBusinessSession } from "../../auth/BusinessSessionContext";
+import { ScreenState } from "../../components/ScreenState";
 import { colors } from "../../theme";
-import { mockRequests, statusLabels, type RequestStatus } from "../../ownerData";
 
-const tabs: { label: string; statuses: RequestStatus[] }[] = [
-  { label: "همه", statuses: ["new", "following", "accepted", "doing", "done", "closed", "rejected"] },
-  { label: "جدید", statuses: ["new"] }, { label: "پیگیری", statuses: ["following", "accepted", "doing"] }, { label: "تمام‌شده", statuses: ["done", "closed"] },
-];
+export type Lead = { id: number; customer_name: string; customer_phone: string; request_text: string; city: string; area: string; budget_min: number | null; budget_max: number | null; status: string; created_at: string; quote_amount: number | null; quote_message: string | null; quote_status: string | null };
+const labels: Record<string, string> = { open: "جدید", matched: "در حال پیگیری", closed: "بسته‌شده", cancelled: "لغوشده" };
 
 export default function RequestsScreen() {
-  const [active, setActive] = useState(0);
-  const data = useMemo(() => mockRequests.filter((item) => tabs[active].statuses.includes(item.status)), [active]);
-  return <View style={styles.page}>
-    <View style={styles.tabs}>{tabs.map((tab, index) => <Pressable key={tab.label} style={[styles.tab, active === index && styles.activeTab]} onPress={() => setActive(index)}><Text style={[styles.tabText, active === index && styles.activeText]}>{tab.label}</Text></Pressable>)}</View>
-    <FlatList data={data} keyExtractor={(item) => item.id} contentContainerStyle={styles.list} renderItem={({ item }) => <Pressable style={styles.card} onPress={() => router.push(`/owner/request/${item.id}`)}>
-      <View style={styles.row}><Text style={styles.title}>{item.title}</Text><Text style={[styles.badge, item.urgency === "فوری" && styles.urgent]}>{item.urgency}</Text></View>
-      <Text style={styles.customer}>{item.customer} · {item.area}</Text><Text style={styles.description} numberOfLines={2}>{item.description}</Text>
-      <View style={styles.footer}><Text style={styles.status}>{statusLabels[item.status]}</Text><Text style={styles.time}>{item.createdAt}</Text></View>
-    </Pressable>} ListEmptyComponent={<Text style={styles.empty}>درخواستی در این بخش وجود ندارد.</Text>} />
-  </View>;
+  const { token } = useBusinessSession();
+  const [data, setData] = useState<Lead[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  const load = useCallback(async () => {
+    try { const result = await apiRequest<{ ok: true; leads: Lead[] }>("/api/me/business/leads", {}, token); setError(""); setData(result.leads); }
+    catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت درخواست‌ها"); }
+    finally { setLoading(false); }
+  }, [token]);
+  useEffect(() => {
+    let active = true;
+    apiRequest<{ ok: true; leads: Lead[] }>("/api/me/business/leads", {}, token)
+      .then((result) => { if (active) { setError(""); setData(result.leads); } })
+      .catch((e) => { if (active) setError(e instanceof Error ? e.message : "خطا در دریافت درخواست‌ها"); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [token]);
+  if (loading) return <ScreenState title="در حال دریافت درخواست‌ها" message="کمی صبر کنید…" />;
+  if (error) return <ScreenState title="ارتباط برقرار نشد" message={error} onRetry={() => { setLoading(true); void load(); }} />;
+  return <View style={styles.page}><FlatList data={data} keyExtractor={(item) => String(item.id)} refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />} contentContainerStyle={styles.list} renderItem={({ item }) => <Pressable style={styles.card} onPress={() => router.push(`/owner/request/${item.id}`)}>
+    <View style={styles.row}><Text style={styles.title}>درخواست #{item.id}</Text><Text style={styles.badge}>{labels[item.status] || item.status}</Text></View>
+    <Text style={styles.customer}>{item.customer_name} · {[item.city, item.area].filter(Boolean).join("، ")}</Text><Text style={styles.description} numberOfLines={3}>{item.request_text}</Text>
+    <View style={styles.footer}><Text style={styles.status}>{item.quote_status === "sent" ? "پیشنهاد ارسال شده" : "نیازمند پاسخ"}</Text><Text style={styles.time}>{new Date(item.created_at).toLocaleDateString("fa-IR")}</Text></View>
+  </Pressable>} ListEmptyComponent={<Text style={styles.empty}>فعلاً درخواست جدیدی برای کسب‌وکار شما ثبت نشده است.</Text>} /></View>;
 }
-
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.cream }, tabs: { flexDirection: "row-reverse", padding: 12, gap: 7, backgroundColor: colors.white, borderBottomWidth: 1, borderColor: colors.line }, tab: { flex: 1, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream }, activeTab: { backgroundColor: colors.green }, tabText: { color: colors.muted, fontSize: 12, fontWeight: "800" }, activeText: { color: colors.white },
-  list: { padding: 16, paddingBottom: 40 }, card: { backgroundColor: colors.white, padding: 17, borderRadius: 19, borderWidth: 1, borderColor: colors.line, marginBottom: 12 }, row: { flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }, title: { color: colors.ink, fontSize: 17, fontWeight: "900", textAlign: "right", flex: 1 }, badge: { color: colors.green, backgroundColor: colors.greenSoft, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, overflow: "hidden", fontSize: 11 }, urgent: { color: "#A53B32", backgroundColor: "#FDECEA" }, customer: { color: colors.green, textAlign: "right", marginTop: 8, fontWeight: "700" }, description: { color: colors.muted, lineHeight: 22, textAlign: "right", marginTop: 8 }, footer: { flexDirection: "row-reverse", justifyContent: "space-between", marginTop: 13 }, status: { color: colors.gold, fontWeight: "800" }, time: { color: colors.muted, fontSize: 12 }, empty: { color: colors.muted, textAlign: "center", marginTop: 60 },
-});
+const styles = StyleSheet.create({ page: { flex: 1, backgroundColor: colors.cream }, list: { padding: 16, paddingBottom: 40 }, card: { backgroundColor: colors.white, padding: 17, borderRadius: 19, borderWidth: 1, borderColor: colors.line, marginBottom: 12 }, row: { flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }, title: { color: colors.ink, fontSize: 17, fontWeight: "900", textAlign: "right" }, badge: { color: colors.green, backgroundColor: colors.greenSoft, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, overflow: "hidden", fontSize: 11 }, customer: { color: colors.green, textAlign: "right", marginTop: 8, fontWeight: "700" }, description: { color: colors.muted, lineHeight: 22, textAlign: "right", marginTop: 8 }, footer: { flexDirection: "row-reverse", justifyContent: "space-between", marginTop: 13 }, status: { color: colors.gold, fontWeight: "800" }, time: { color: colors.muted, fontSize: 12 }, empty: { color: colors.muted, textAlign: "center", marginTop: 60, lineHeight: 24 } });
