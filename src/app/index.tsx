@@ -36,7 +36,7 @@ export default function HomeScreen() {
         <View style={styles.businessBanner}>
           <Text style={styles.bannerTitle}>صاحب کسب‌وکار هستی؟</Text>
           <Text style={styles.bannerCopy}>در همین اپ درخواست‌ها، پیام‌ها و پروفایل کسب‌وکارت را مدیریت کن.</Text>
-          <Pressable style={styles.ownerButton} onPress={() => router.push("/owner")}><Text style={styles.ownerButtonText}>ورود به پنل کسب‌وکار</Text></Pressable>
+          <Pressable style={styles.ownerButton} onPress={() => router.push("/business-login")}><Text style={styles.ownerButtonText}>ورود یا ثبت کسب‌وکار</Text></Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
