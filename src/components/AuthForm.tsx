@@ -3,11 +3,11 @@ import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from "re
 import { colors } from "../theme";
 
 export function Field(props: TextInputProps & { label: string }) {
-  return <View style={styles.field}><Text style={styles.label}>{props.label}</Text><TextInput {...props} style={styles.input} textAlign="right" placeholderTextColor="#929B96" /></View>;
+  return <View style={styles.field}><Text style={styles.label}>{props.label}</Text><TextInput accessibilityLabel={props.label} {...props} style={styles.input} textAlign="right" placeholderTextColor="#929B96" /></View>;
 }
 
 export function SubmitButton({ title, busy, onPress }: { title: string; busy?: boolean; onPress: () => void }) {
-  return <Pressable disabled={busy} style={[styles.button, busy && styles.disabled]} onPress={onPress}><Text style={styles.buttonText}>{busy ? "کمی صبر کنید…" : title}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: Boolean(busy), busy: Boolean(busy) }} disabled={busy} style={[styles.button, busy && styles.disabled]} onPress={onPress}><Text style={styles.buttonText}>{busy ? "کمی صبر کنید…" : title}</Text></Pressable>;
 }
 
 export function ErrorText({ children }: PropsWithChildren) {
