@@ -1,12 +1,19 @@
 import * as SecureStore from "expo-secure-store";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiRequest } from "../api/client";
+import { ApiError, apiRequest, normalizeIranPhone } from "../api/client";
 
 const TOKEN_KEY = "khonenama_business_access_token";
 
 export type BusinessProfile = {
   owner: { id: string; fullName: string; phone: string; phoneVerified: boolean };
-  business: { id: number; slug: string; name: string; completion: number; leadCount: number; verification_status: string };
+  business: {
+    id: number; slug: string; name: string; description: string; city: string;
+    area: string | null; address: string | null; phone: string | null;
+    whatsapp: string | null; website: string | null; instagram: string | null;
+    status: string; completion: number; leadCount: number; verification_status: string;
+    services: { id: number; slug: string; name: string }[];
+    serviceAreas: { id: number; city: string; area: string; is_primary: number }[];
+  };
 };
 
 type SessionContextValue = {
@@ -36,12 +43,16 @@ export function BusinessSessionProvider({ children }: PropsWithChildren) {
       try {
         const saved = await SecureStore.getItemAsync(TOKEN_KEY);
         if (saved) {
-          await loadProfile(saved);
           setToken(saved);
+          try { await loadProfile(saved); }
+          catch (error) {
+            if (error instanceof ApiError && error.status === 401) {
+              setToken(null);
+              await SecureStore.deleteItemAsync(TOKEN_KEY);
+            }
+          }
         }
-      } catch {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-      } finally {
+      } catch { /* SecureStore can be retried on the next launch. */ } finally {
         setLoading(false);
       }
     })();
@@ -55,7 +66,7 @@ export function BusinessSessionProvider({ children }: PropsWithChildren) {
 
   const login = useCallback(async (phone: string, password: string) => {
     const result = await apiRequest<{ ok: true; accessToken: string }>("/api/auth/business/login", {
-      method: "POST", body: JSON.stringify({ phone, password }),
+      method: "POST", body: JSON.stringify({ phone: normalizeIranPhone(phone), password }),
     });
     await saveSession(result.accessToken);
   }, [saveSession]);
