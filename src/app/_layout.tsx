@@ -3,11 +3,13 @@ import { StatusBar } from "expo-status-bar";
 import { colors } from "../theme";
 import { AppErrorBoundary } from "../components/AppErrorBoundary";
 import { BusinessSessionProvider } from "../auth/BusinessSessionContext";
+import { BusinessNotifications } from "../notifications/BusinessNotifications";
 
 export default function RootLayout() {
   return (
     <AppErrorBoundary>
       <BusinessSessionProvider>
+      <BusinessNotifications />
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerBackTitle: "بازگشت", headerTintColor: colors.green, headerTitleAlign: "center", contentStyle: { backgroundColor: colors.cream } }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
