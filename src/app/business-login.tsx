@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { ApiError } from "../api/client";
+import { ApiError, normalizeIranPhone } from "../api/client";
 import { useBusinessSession } from "../auth/BusinessSessionContext";
 import { ErrorText, Field, SubmitButton } from "../components/AuthForm";
 import { colors } from "../theme";
@@ -18,9 +18,11 @@ export default function BusinessLoginScreen() {
   useEffect(() => { if (!loading && token) router.replace("/owner"); }, [loading, token]);
 
   async function submit() {
-    if (!/^09\d{9}$/.test(phone.replace(/\D/g, "")) || password.length < 8) { setError("شماره موبایل و رمز عبور حداقل ۸ حرفی را کامل وارد کنید."); return; }
+    if (busy) return;
+    const normalizedPhone = normalizeIranPhone(phone);
+    if (!/^09\d{9}$/.test(normalizedPhone) || password.length < 8) { setError("شماره موبایل و رمز عبور حداقل ۸ حرفی را کامل وارد کنید."); return; }
     setBusy(true); setError("");
-    try { await login(phone, password); router.replace("/owner"); }
+    try { await login(normalizedPhone, password); router.replace("/owner"); }
     catch (e) { const code = e instanceof ApiError ? e.code : ""; setError(messages[code] || (e instanceof Error ? e.message : "ورود انجام نشد.")); }
     finally { setBusy(false); }
   }
