@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { ApiError } from "../api/client";
+import { ApiError, normalizeIranPhone } from "../api/client";
 import { useBusinessSession } from "../auth/BusinessSessionContext";
 import { ErrorText, Field, SubmitButton } from "../components/AuthForm";
 import { colors } from "../theme";
@@ -19,9 +19,11 @@ export default function BusinessRegisterScreen() {
   const [category, setCategory] = useState(categories[0]); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const set = (key: keyof typeof form) => (value: string) => setForm((old) => ({ ...old, [key]: value }));
   async function submit() {
-    if (!form.ownerName || !form.businessName || !form.city || !/^09\d{9}$/.test(form.phone.replace(/\D/g, "")) || form.password.length < 8 || form.description.trim().length < 20) { setError("همه موارد را کامل کنید؛ معرفی کسب‌وکار باید حداقل ۲۰ حرف باشد."); return; }
+    if (busy) return;
+    const phone = normalizeIranPhone(form.phone);
+    if (!form.ownerName.trim() || !form.businessName.trim() || !form.city.trim() || !/^09\d{9}$/.test(phone) || form.password.length < 8 || form.description.trim().length < 20) { setError("همه موارد را کامل کنید؛ معرفی کسب‌وکار باید حداقل ۲۰ حرف باشد."); return; }
     setBusy(true); setError("");
-    try { await register({ ...form, categories: [category.slug], services: [category.service], serviceAreas: [form.area || form.city], businessType: "store" }); router.replace("/owner"); }
+    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: [category.slug], services: [category.service], serviceAreas: [form.area.trim() || form.city.trim()], businessType: "store" }); router.replace("/owner"); }
     catch (e) { const code = e instanceof ApiError ? e.code : ""; setError(errors[code] || (e instanceof Error ? e.message : "ثبت انجام نشد.")); }
     finally { setBusy(false); }
   }
