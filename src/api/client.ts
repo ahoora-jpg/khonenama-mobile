@@ -4,8 +4,36 @@ export const API_BASE = process.env.EXPO_PUBLIC_API_URL || "https://khonenama.ir
 
 export class ApiError extends Error {
   constructor(public code: string, public status: number) {
-    super(code);
+    super(errorMessage(code, status));
   }
+}
+
+const errorMessages: Record<string, string> = {
+  INVALID_CREDENTIALS: "شماره تلفن یا رمز عبور درست نیست.",
+  UNAUTHORIZED: "نشست شما به پایان رسیده است؛ دوباره وارد شوید.",
+  FORBIDDEN: "اجازه انجام این عملیات را ندارید.",
+  NOT_FOUND: "اطلاعات درخواستی پیدا نشد.",
+  TOO_MANY_ATTEMPTS: "تعداد تلاش‌ها زیاد بود؛ کمی بعد دوباره امتحان کنید.",
+  VALIDATION_ERROR: "اطلاعات واردشده معتبر نیست.",
+};
+
+function errorMessage(code: string, status: number) {
+  if (errorMessages[code]) return errorMessages[code];
+  if (status === 401) return errorMessages.UNAUTHORIZED;
+  if (status === 403) return errorMessages.FORBIDDEN;
+  if (status === 404) return errorMessages.NOT_FOUND;
+  if (status === 429) return errorMessages.TOO_MANY_ATTEMPTS;
+  if (status >= 500) return "سرویس موقتاً در دسترس نیست؛ کمی بعد دوباره تلاش کنید.";
+  return "انجام درخواست ممکن نشد؛ اطلاعات را بررسی و دوباره تلاش کنید.";
+}
+
+export function normalizeIranPhone(value: string) {
+  const persian = "۰۱۲۳۴۵۶۷۸۹";
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  let phone = value.trim().replace(/[۰-۹]/g, (digit) => String(persian.indexOf(digit))).replace(/[٠-٩]/g, (digit) => String(arabic.indexOf(digit))).replace(/[^\d+]/g, "");
+  if (phone.startsWith("+98")) phone = `0${phone.slice(3)}`;
+  else if (phone.startsWith("98") && phone.length === 12) phone = `0${phone.slice(2)}`;
+  return phone;
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}, accessToken?: string | null): Promise<T> {

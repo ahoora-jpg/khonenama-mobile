@@ -14,7 +14,7 @@ export default function OwnerDashboard() {
       <Text style={styles.sectionTitle}>دسترسی سریع</Text>
       <View style={styles.actions}>
         <Action title="درخواست‌ها" caption="مشاهده و پیگیری" onPress={() => router.push("/owner/requests")} />
-        <Action title="پیام‌ها" caption="گفتگو با مشتری" onPress={() => router.push("/owner/messages")} />
+        <Action title="ارتباط با مشتری" caption="راه‌های پاسخ‌گویی به درخواست" onPress={() => router.push("/owner/messages")} />
         <Action title="پروفایل" caption="اطلاعات و خدمات" onPress={() => router.push("/owner/profile")} />
       </View>
       <Pressable style={styles.logout} onPress={async () => { await logout(); router.replace("/business-login"); }}><Text style={styles.logoutText}>خروج از حساب کسب‌وکار</Text></Pressable>

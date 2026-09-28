@@ -1,66 +1,15 @@
-name: Build Android APK
+name: Obsolete Debug Build (Disabled)
 
+# Kept only to make old bookmarks explicit. Production APK and Store AAB
+# are built by mobile-release.yml and android-store.yml.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-android:
+  guidance:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    env:
-      NODE_ENV: production
-      CI: true
-
     steps:
-      - name: دریافت کد
-        uses: actions/checkout@v4
-
-      - name: آزادسازی فضای Runner
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          df -h
-
-      - name: نصب Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: نصب Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: نصب وابستگی‌ها
-        run: npm ci
-
-      - name: ساخت پروژه Android
-        run: npx expo prebuild --platform android --non-interactive --clean
-
-      - name: صدور مجوز اجرای Gradle
-        run: chmod +x android/gradlew
-
-      - name: ساخت APK سبک
-        working-directory: android
-        run: |
-          ./gradlew assembleDebug \
-            --no-daemon \
-            --stacktrace \
-            -PreactNativeArchitectures=arm64-v8a
-
-      - name: انتشار APK برای دانلود
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "apk-${{ github.run_number }}" \
-            "android/app/build/outputs/apk/debug/app-debug.apk#khonenama.apk" \
-            --title "Khonenama Android APK - Build ${{ github.run_number }}" \
-            --notes "نسخه آزمایشی قابل نصب اپلیکیشن خونه‌نما"
+      - run: echo "Use Build Khonenama Android Release or Build Android Store Bundle."

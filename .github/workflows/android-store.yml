@@ -1,0 +1,87 @@
+name: Build Android Store Bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-store-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NODE_ENV: production
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate source
+        run: |
+          npm run typecheck
+          npm run lint
+          npx expo-doctor
+          npm run validate:release
+
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --clean
+
+      - name: Configure production signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/khonenama-production.jks
+          node scripts/configure-android-signing.mjs
+
+      - name: Build Google Play AAB
+        working-directory: android
+        env:
+          KHONENAMA_STORE_FILE: khonenama-production.jks
+          KHONENAMA_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KHONENAMA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KHONENAMA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Prepare and verify bundle
+        run: |
+          cp android/app/build/outputs/bundle/release/app-release.aab khonenama-production.aab
+          jarsigner -verify -strict -certs khonenama-production.aab
+          keytool -printcert -jarfile khonenama-production.aab | tee bundle-certificate.txt
+          grep -qi '45:1F:3F:E2:74:80:D2:E5:EA:49:03:5E:43:34:3C:03:38:0A:1A:A3:02:F2:E9:D9:CE:50:17:E3:F3:FF:EE:8D' bundle-certificate.txt
+          sha256sum khonenama-production.aab | tee khonenama-production.aab.sha256
+          node -e "const a=require('./app.json').expo; console.log(JSON.stringify({name:a.name,package:a.android.package,version:a.version,versionCode:a.android.versionCode},null,2))" | tee store-build.json
+
+      - name: Upload Google Play bundle
+        uses: actions/upload-artifact@v5
+        with:
+          name: khonenama-google-play-${{ github.run_number }}
+          path: |
+            khonenama-production.aab
+            khonenama-production.aab.sha256
+            bundle-certificate.txt
+            store-build.json
+          if-no-files-found: error
+          retention-days: 30
