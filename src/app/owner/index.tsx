@@ -13,6 +13,11 @@ export default function OwnerDashboard() {
       <View style={styles.stats}>{stats.map(([label, value]) => <View key={label} style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>)}</View>
       <Text style={styles.sectionTitle}>دسترسی سریع</Text>
       <View style={styles.actions}>
+        <Action title="تصاویر و آلبوم‌ها" caption="عکاسی، آپلود و مدیریت نمونه‌کار" onPress={() => router.push("/owner/gallery")} />
+        <Action title="لینک و کد تصویری" caption="اشتراک‌گذاری گالری با مشتری" onPress={() => router.push("/owner/public-link")} />
+        <Action title="اشتراک" caption="اعتبار و ظرفیت امکانات" onPress={() => router.push("/owner/subscription")} />
+        <Action title="خدمات و ساعت کاری" caption="انتخاب خدمات واقعی و روزهای فعالیت" onPress={() => router.push("/owner/services")} />
+        <Action title="آمار و نظر مشتریان" caption="بازدید، تماس و بازخورد واقعی" onPress={() => router.push("/owner/insights")} />
         <Action title="درخواست‌ها" caption="مشاهده و پیگیری" onPress={() => router.push("/owner/requests")} />
         <Action title="ارتباط با مشتری" caption="راه‌های پاسخ‌گویی به درخواست" onPress={() => router.push("/owner/messages")} />
         <Action title="پروفایل" caption="اطلاعات و خدمات" onPress={() => router.push("/owner/profile")} />

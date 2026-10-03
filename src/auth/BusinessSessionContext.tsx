@@ -11,6 +11,7 @@ export type BusinessProfile = {
     area: string | null; address: string | null; phone: string | null;
     whatsapp: string | null; website: string | null; instagram: string | null;
     status: string; completion: number; leadCount: number; verification_status: string;
+    plan: { code: string; name: string; ends_at: string | null } | null;
     services: { id: number; slug: string; name: string }[];
     serviceAreas: { id: number; city: string; area: string; is_primary: number }[];
   };

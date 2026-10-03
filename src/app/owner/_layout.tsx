@@ -13,6 +13,11 @@ export default function OwnerLayout() {
     <Stack.Screen name="request/[id]" options={{ title: "جزئیات درخواست" }} />
     <Stack.Screen name="messages" options={{ title: "پیام‌ها" }} />
     <Stack.Screen name="profile" options={{ title: "پروفایل کسب‌وکار" }} />
+    <Stack.Screen name="gallery" options={{ title: "تصاویر و آلبوم‌ها" }} />
+    <Stack.Screen name="subscription" options={{ title: "اشتراک کسب‌وکار" }} />
+    <Stack.Screen name="services" options={{ title: "خدمات و ساعت کاری" }} />
+    <Stack.Screen name="insights" options={{ title: "آمار و نظر مشتریان" }} />
+    <Stack.Screen name="public-link" options={{ title: "لینک اختصاصی و کد تصویری" }} />
   </Stack>;
 }
 

@@ -40,6 +40,10 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+      - name: Test photo uploads
+        run: node --test scripts/test-media.mjs
+      - name: Lint
+        run: npm run lint
 
       - name: Expo doctor
         run: npx expo-doctor

@@ -3,7 +3,7 @@
     "name": "خونه‌نما",
     "slug": "khonenama",
     "scheme": "khonenama",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "اپ خونه نما برای ثبت و مدیریت کسب‌وکار، دریافت درخواست مشتری و پاسخ‌گویی سریع.",
     "primaryColor": "#AD6039",
     "backgroundColor": "#F1F0EA",
@@ -22,7 +22,6 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "blockedPermissions": [
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -30,12 +29,13 @@
       ],
       "predictiveBackGestureEnabled": false,
       "package": "ir.khonenama.app",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      ["expo-image-picker", {"cameraPermission": "برای عکاسی از نمونه‌کارهای کسب‌وکار، دسترسی دوربین لازم است.", "photosPermission": "برای انتخاب تصویر نمونه‌کار از گالری گوشی.", "microphonePermission": false}],
       "expo-router",
       "expo-status-bar",
       [

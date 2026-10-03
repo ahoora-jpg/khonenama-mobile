@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors } from "../theme";
 
 const categories = [
@@ -10,7 +10,7 @@ const categories = [
 
 export default function HomeScreen() {
   const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("کرج");
+  const [location, setLocation] = useState("");
   const openSearch = (category?: string) => router.push({ pathname: "/search", params: { q: query, location, category } });
 
   return (
@@ -34,6 +34,9 @@ export default function HomeScreen() {
           ))}
         </View>
         <View style={styles.businessBanner}>
+          <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/magazine")}><Text style={styles.ownerButtonText}>مقالات و راهنمای انتخاب</Text></Pressable>
+          <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/tools/curtain-fabric-calculator")}><Text style={styles.ownerButtonText}>محاسبه پارچه پرده</Text></Pressable>
+          <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/tools/wallpaper-calculator")}><Text style={styles.ownerButtonText}>محاسبه کاغذ دیواری</Text></Pressable>
           <Text style={styles.bannerTitle}>صاحب کسب‌وکار هستی؟</Text>
           <Text style={styles.bannerCopy}>در همین اپ درخواست‌ها، پیام‌ها و پروفایل کسب‌وکارت را مدیریت کن.</Text>
           <Pressable style={styles.ownerButton} onPress={() => router.push("/business-login")}><Text style={styles.ownerButtonText}>ورود یا ثبت کسب‌وکار</Text></Pressable>

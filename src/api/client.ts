@@ -9,6 +9,13 @@ export class ApiError extends Error {
 }
 
 const errorMessages: Record<string, string> = {
+  GALLERY_LIMIT_REACHED: "ظرفیت تصاویر اشتراک شما تکمیل است.",
+  PAID_PLAN_REQUIRED: "ساخت آلبوم به اشتراک حرفه‌ای یا ویژه نیاز دارد.",
+  MEDIA_PROCESSING_FAILED: "پردازش عکس انجام نشد؛ عکس دیگری انتخاب کنید.",
+  SLUG_TAKEN: "این لینک قبلاً انتخاب شده است.",
+  SLUG_INVALID: "لینک فقط شامل حروف انگلیسی، عدد و خط تیره باشد.",
+  SLUG_TOO_SHORT: "نام لینک بسیار کوتاه است.",
+  SLUG_RESERVED: "این نام لینک رزرو شده است.",
   INVALID_CREDENTIALS: "شماره تلفن یا رمز عبور درست نیست.",
   UNAUTHORIZED: "نشست شما به پایان رسیده است؛ دوباره وارد شوید.",
   FORBIDDEN: "اجازه انجام این عملیات را ندارید.",
@@ -38,13 +45,13 @@ export function normalizeIranPhone(value: string) {
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}, accessToken?: string | null): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12_000);
+  const timer = setTimeout(() => controller.abort(), options.body instanceof FormData ? 90_000 : 12_000);
   try {
     const response = await fetch(API_BASE + path, {
       ...options,
       headers: {
         Accept: "application/json",
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.body && !(options.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...options.headers,
       },

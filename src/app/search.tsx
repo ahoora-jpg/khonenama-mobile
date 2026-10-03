@@ -10,7 +10,7 @@ import { ScreenState } from "../components/ScreenState";
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string; location?: string; category?: string }>();
   const [query, setQuery] = useState(params.q || "");
-  const [location, setLocation] = useState(params.location || "کرج");
+  const [location, setLocation] = useState(params.location || "");
   const [items, setItems] = useState<BusinessSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,7 +24,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     let active = true;
-    searchBusinesses({ q: params.q || "", location: params.location || "کرج", category: params.category })
+    searchBusinesses({ q: params.q || "", location: params.location || "", category: params.category })
       .then((results) => { if (active) setItems(results); })
       .catch(() => { if (active) setError("دریافت اطلاعات ممکن نشد. اتصال اینترنت را بررسی کنید."); })
       .finally(() => { if (active) setLoading(false); });

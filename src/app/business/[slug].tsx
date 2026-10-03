@@ -4,11 +4,13 @@ import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, T
 import { getBusiness } from "../../api/client";
 import { colors } from "../../theme";
 import type { BusinessDetail } from "../../types";
+import { BusinessQuote } from "../../components/BusinessQuote";
 
 export default function BusinessScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [business, setBusiness] = useState<BusinessDetail | null>(null);
   const [error, setError] = useState("");
+  const [openAlbum, setOpenAlbum] = useState<number | null>(null);
   useEffect(() => { if (slug) getBusiness(slug).then(setBusiness).catch(() => setError("این پروفایل در دسترس نیست.")); }, [slug]);
   if (error) return <Text style={styles.message}>{error}</Text>;
   if (!business) return <ActivityIndicator color={colors.green} size="large" style={styles.loader} />;
@@ -25,9 +27,13 @@ export default function BusinessScreen() {
         {business.address ? <Text style={styles.address}>نشانی: {business.address}</Text> : null}
         <View style={styles.actions}>
           {business.phone ? <Pressable style={styles.primary} onPress={() => Linking.openURL(`tel:${business.phone}`)}><Text style={styles.primaryText}>تماس</Text></Pressable> : null}
-          {business.whatsapp ? <Pressable style={styles.secondary} onPress={() => Linking.openURL(`https://wa.me/${business.whatsapp.replace(/\D/g, "")}`)}><Text style={styles.secondaryText}>واتساپ</Text></Pressable> : null}
+          {business.whatsapp ? <Pressable style={styles.secondary} onPress={() => Linking.openURL(`https://wa.me/${business.whatsapp.replace(/\D/g, "").replace(/^0/, "98")}`)}><Text style={styles.secondaryText}>واتساپ</Text></Pressable> : null}
         </View>
       </View>
+      {business.media?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>گالری نمونه‌کار</Text>{business.media.map(item => <View key={item.id}><Image source={{ uri: item.url }} style={{ width: "100%", height: 230, marginTop: 12, borderRadius: 12 }} resizeMode="contain" accessibilityLabel={item.altText || "نمونه‌کار"} />{item.altText ? <Text style={styles.description}>{item.altText}</Text> : null}</View>)}</View> : null}
+      {business.albums?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>آلبوم‌های پروژه</Text>{business.albums.map(album => <View key={album.id}><Pressable accessibilityRole="button" onPress={() => setOpenAlbum(openAlbum === album.id ? null : album.id)}><Text style={styles.description}>{album.title} · {album.media.length} تصویر</Text></Pressable>{openAlbum === album.id && <><Text style={styles.description}>{album.description}</Text>{album.media.map(item => <Image key={item.id} source={{ uri: item.url }} style={{ height: 220, marginTop: 12 }} resizeMode="contain" accessibilityLabel={item.altText || album.title} />)}</>}</View>)}</View> : null}
+      {business.hours?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>ساعت کاری</Text>{business.hours.map(h => <Text key={h.weekday} style={styles.description}>{["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"][h.weekday]}: {h.isClosed ? "تعطیل" : `${h.opensAt} تا ${h.closesAt}`}</Text>)}</View> : null}
+      <BusinessQuote slug={business.slug} name={business.name} />
       {business.reviews?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>نظر مشتریان</Text>{business.reviews.map((review) => <View key={review.id} style={styles.review}><Text style={styles.reviewTitle}>{review.name} · {"★".repeat(review.rating)}</Text><Text style={styles.reviewBody}>{review.body}</Text></View>)}</View> : null}
     </ScrollView>
   );
