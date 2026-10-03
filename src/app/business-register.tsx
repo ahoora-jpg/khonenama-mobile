@@ -30,7 +30,7 @@ export default function BusinessRegisterScreen() {
     if (!selectedCategories.length || !selectedServices.length) { setError("حداقل یک دسته و یک خدمت واقعی انتخاب کنید."); return; }
     if (!form.ownerName.trim() || !form.businessName.trim() || !form.city.trim() || !/^09\d{9}$/.test(phone) || form.password.length < 8 || form.description.trim().length < 20) { setError("همه موارد را کامل کنید؛ معرفی کسب‌وکار باید حداقل ۲۰ حرف باشد."); return; }
     setBusy(true); setError("");
-    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() || form.city.trim()], businessType: "store" }); router.replace("/owner"); }
+    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() || form.city.trim()], businessType: "store" }); router.replace("/owner/subscription"); }
     catch (e) { const code = e instanceof ApiError ? e.code : ""; setError(errors[code] || (e instanceof Error ? e.message : "ثبت انجام نشد.")); }
     finally { setBusy(false); }
   }
