@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Linking, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { Text, TextInput, View } from "react-native";
 import { apiRequest, normalizeIranPhone } from "../api/client";
 import { ToolButton, toolStyles as s } from "./OwnerTools";
 export function BusinessQuote({ slug, name }: { slug: string; name: string }) {
@@ -14,5 +15,5 @@ export function BusinessQuote({ slug, name }: { slug: string; name: string }) {
     catch(e) { setMessage(e instanceof Error ? e.message : "ثبت درخواست انجام نشد."); }
     finally { setBusy(false); }
   }
-  return <View style={[s.panel, { margin: 16, marginBottom: 0 }]}><Text style={s.title}>درخواست خصوصی از {name}</Text>{code ? <><Text style={s.text}>درخواست ثبت شد. کد پیگیری: {code}</Text><ToolButton title="پیگیری پاسخ" onPress={() => void Linking.openURL(`https://khonenama.ir/request-status?code=${encodeURIComponent(code)}`)} /></> : <><TextInput style={s.input} placeholder="نام شما" value={customerName} onChangeText={setName} maxLength={100} /><TextInput style={s.input} placeholder="شماره موبایل" keyboardType="phone-pad" value={customerPhone} onChangeText={setPhone} maxLength={20} /><TextInput style={s.input} placeholder="محدوده خدمت" value={area} onChangeText={setArea} maxLength={100} /><TextInput style={s.input} placeholder="چه خدمتی نیاز دارید؟" multiline value={requestText} onChangeText={setRequest} maxLength={2000} /><Text style={s.text}>اطلاعات درخواست برای همین کسب‌وکار ارسال می‌شود و در صفحه عمومی دیده نمی‌شود.</Text><ToolButton title={busy ? "در حال ارسال…" : "ارسال درخواست"} disabled={busy} onPress={() => void send()} />{message ? <Text style={s.text}>{message}</Text> : null}</>}</View>;
+  return <View style={[s.panel, { margin: 16, marginBottom: 0 }]}><Text style={s.title}>درخواست خصوصی از {name}</Text>{code ? <><Text style={s.text}>درخواست ثبت شد. کد پیگیری: {code}</Text><ToolButton title="پیگیری پاسخ" onPress={() => router.push({pathname:"/request-status",params:{code}})} /></> : <><TextInput style={s.input} placeholder="نام شما" value={customerName} onChangeText={setName} maxLength={100} /><TextInput style={s.input} placeholder="شماره موبایل" keyboardType="phone-pad" value={customerPhone} onChangeText={setPhone} maxLength={20} /><TextInput style={s.input} placeholder="محدوده خدمت" value={area} onChangeText={setArea} maxLength={100} /><TextInput style={s.input} placeholder="نوع خدمت، ابعاد، متریال، وضعیت زیرکار و زمان موردنظر" multiline value={requestText} onChangeText={setRequest} maxLength={2000} /><Text style={s.text}>اطلاعات درخواست برای همین کسب‌وکار ارسال می‌شود و در صفحه عمومی دیده نمی‌شود.</Text><ToolButton title={busy ? "در حال ارسال…" : "ارسال درخواست"} disabled={busy} onPress={() => void send()} />{message ? <Text style={s.text}>{message}</Text> : null}</>}</View>;
 }

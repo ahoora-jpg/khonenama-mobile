@@ -1,0 +1,7 @@
+import SupportStatus from "../components/SupportStatus";
+import { useState } from 'react';
+import { ScrollView, Text, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { apiRequest } from '../api/client';
+import { ToolButton,toolStyles as s } from '../components/OwnerTools';
+export default function Support(){const {slug,reviewId}=useLocalSearchParams<{slug?:string;reviewId?:string}>();const [contact,setContact]=useState(''),[message,setMessage]=useState(''),[result,setResult]=useState(''),[busy,setBusy]=useState(false);return <ScrollView style={s.page} contentContainerStyle={s.content}><View style={s.panel}><Text style={s.title}>گزارش مشکل و پشتیبانی</Text><TextInput accessibilityLabel="شماره یا ایمیل تماس" placeholder="شماره یا ایمیل تماس" style={s.input} value={contact} onChangeText={setContact} maxLength={150}/><TextInput accessibilityLabel="شرح مشکل" placeholder="شرح مشکل" style={s.input} value={message} onChangeText={setMessage} multiline maxLength={2000}/><ToolButton title="ثبت گزارش" disabled={busy} onPress={async()=>{setBusy(true);try{const data=await apiRequest<{code:string}>('/api/support',{method:'POST',body:JSON.stringify({contact,message,businessSlug:slug||'',reviewId:reviewId?Number(reviewId):undefined})});setResult('ثبت شد. کد پیگیری: '+data.code);setMessage('');}catch{setResult('ثبت انجام نشد؛ اطلاعات را بررسی کنید.');}finally{setBusy(false);}}}/><Text style={s.text}>{result}</Text></View><SupportStatus/></ScrollView>;}

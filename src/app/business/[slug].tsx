@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import PublicCampaigns from "../../components/PublicCampaigns";
+import CustomerReview from "../../components/CustomerReview";
+import SavedBusiness from "../../components/SavedBusiness";
+import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getBusiness } from "../../api/client";
 import { colors } from "../../theme";
@@ -31,10 +34,10 @@ export default function BusinessScreen() {
         </View>
       </View>
       {business.media?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>گالری نمونه‌کار</Text>{business.media.map(item => <View key={item.id}><Image source={{ uri: item.url }} style={{ width: "100%", height: 230, marginTop: 12, borderRadius: 12 }} resizeMode="contain" accessibilityLabel={item.altText || "نمونه‌کار"} />{item.altText ? <Text style={styles.description}>{item.altText}</Text> : null}</View>)}</View> : null}
-      {business.albums?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>آلبوم‌های پروژه</Text>{business.albums.map(album => <View key={album.id}><Pressable accessibilityRole="button" onPress={() => setOpenAlbum(openAlbum === album.id ? null : album.id)}><Text style={styles.description}>{album.title} · {album.media.length} تصویر</Text></Pressable>{openAlbum === album.id && <><Text style={styles.description}>{album.description}</Text>{album.media.map(item => <Image key={item.id} source={{ uri: item.url }} style={{ height: 220, marginTop: 12 }} resizeMode="contain" accessibilityLabel={item.altText || album.title} />)}</>}</View>)}</View> : null}
+      {business.albums?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>آلبوم‌های پروژه</Text>{business.albums.map(album => <View key={album.id}><Pressable accessibilityRole="button" onPress={() => setOpenAlbum(openAlbum === album.id ? null : album.id)}><Text style={styles.description}>{album.title} · {album.media.length} تصویر</Text></Pressable>{openAlbum === album.id && <><Text style={styles.description}>{album.description}</Text>{album.project && <Text style={styles.description}>{[album.project.service,album.project.materials,album.project.area].filter(Boolean).join(" · ")}</Text>}{album.media.map(item => <Image key={item.id} source={{ uri: item.url }} style={{ height: 220, marginTop: 12 }} resizeMode="contain" accessibilityLabel={item.altText || album.title} />)}</>}</View>)}</View> : null}
       {business.hours?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>ساعت کاری</Text>{business.hours.map(h => <Text key={h.weekday} style={styles.description}>{["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"][h.weekday]}: {h.isClosed ? "تعطیل" : `${h.opensAt} تا ${h.closesAt}`}</Text>)}</View> : null}
-      <BusinessQuote slug={business.slug} name={business.name} />
-      {business.reviews?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>نظر مشتریان</Text>{business.reviews.map((review) => <View key={review.id} style={styles.review}><Text style={styles.reviewTitle}>{review.name} · {"★".repeat(review.rating)}</Text><Text style={styles.reviewBody}>{review.body}</Text></View>)}</View> : null}
+      <PublicCampaigns slug={business.slug}/><SavedBusiness slug={business.slug}/><BusinessQuote slug={business.slug} name={business.name} /><CustomerReview slug={business.slug}/><Pressable style={styles.panel} onPress={()=>router.push({pathname:"/support",params:{slug:business.slug}})}><Text style={styles.description}>گزارش مشکل این غرفه</Text></Pressable>
+      {business.reviews?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>نظر مشتریان</Text>{business.reviews.map((review) => <View key={review.id} style={styles.review}><Text style={styles.reviewTitle}>{review.name} · {"★".repeat(review.rating)}</Text><Text style={styles.reviewBody}>{review.body}</Text><Pressable onPress={()=>router.push({pathname:"/support",params:{slug:business.slug,reviewId:String(review.id)}})}><Text style={styles.description}>گزارش این نظر</Text></Pressable>{review.reply ? <Text style={styles.reviewBody}>پاسخ کسب‌وکار: {review.reply}</Text> : null}</View>)}</View> : null}
     </ScrollView>
   );
 }

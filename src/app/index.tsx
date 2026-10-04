@@ -37,6 +37,7 @@ export default function HomeScreen() {
           <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/magazine")}><Text style={styles.ownerButtonText}>مقالات و راهنمای انتخاب</Text></Pressable>
           <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/tools/curtain-fabric-calculator")}><Text style={styles.ownerButtonText}>محاسبه پارچه پرده</Text></Pressable>
           <Pressable accessibilityRole="link" onPress={() => Linking.openURL("https://khonenama.ir/tools/wallpaper-calculator")}><Text style={styles.ownerButtonText}>محاسبه کاغذ دیواری</Text></Pressable>
+          <Pressable onPress={()=>router.push("/saved")}><Text style={styles.ownerButtonText}>غرفه‌های ذخیره‌شده و مقایسه</Text></Pressable><Pressable onPress={()=>router.push("/request-status")}><Text style={styles.ownerButtonText}>پیگیری درخواست</Text></Pressable><Pressable onPress={()=>router.push("/support")}><Text style={styles.ownerButtonText}>پشتیبانی</Text></Pressable>
           <Text style={styles.bannerTitle}>صاحب کسب‌وکار هستی؟</Text>
           <Text style={styles.bannerCopy}>در همین اپ درخواست‌ها، پیام‌ها و پروفایل کسب‌وکارت را مدیریت کن.</Text>
           <Pressable style={styles.ownerButton} onPress={() => router.push("/business-login")}><Text style={styles.ownerButtonText}>ورود یا ثبت کسب‌وکار</Text></Pressable>

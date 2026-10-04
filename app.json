@@ -3,7 +3,7 @@
     "name": "خونه‌نما",
     "slug": "khonenama",
     "scheme": "khonenama",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "description": "اپ خونه نما برای ثبت و مدیریت کسب‌وکار، دریافت درخواست مشتری و پاسخ‌گویی سریع.",
     "primaryColor": "#AD6039",
     "backgroundColor": "#F1F0EA",
@@ -29,7 +29,7 @@
       ],
       "predictiveBackGestureEnabled": false,
       "package": "ir.khonenama.app",
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
