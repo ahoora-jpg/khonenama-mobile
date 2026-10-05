@@ -10,6 +10,13 @@ export class ApiError extends Error {
 }
 
 const errorMessages: Record<string, string> = {
+  QUOTE_CHANGED: "قیمت یا مدت تغییر کرده؛ اشتراک‌ها را تازه کنید و دوباره مبلغ را بررسی کنید.",
+  PAYMENT_PROVIDER_NOT_CONFIGURED: "درگاه هنوز فعال نشده است.",
+  PLAN_PRICING_NOT_ACTIVE: "قیمت این اشتراک هنوز نهایی نشده است.",
+  LOWER_PLAN_ACTIVE: "اشتراک بالاتر شما هنوز فعال است؛ خرید اشتراک پایین‌تر پس از پایان آن ممکن است.",
+  INDEFINITE_PLAN_ACTIVE: "همین اشتراک بدون تاریخ پایان برای شما فعال است.",
+  CHECKOUT_ALREADY_CREATED: "این درخواست قبلاً ثبت شده؛ سوابق پرداخت را بررسی کنید.",
+  PAYMENT_REQUEST_FAILED: "ارتباط با درگاه انجام نشد؛ سوابق پرداخت را بررسی کنید.",
   GALLERY_LIMIT_REACHED: "ظرفیت تصاویر اشتراک شما تکمیل است.",
   PAID_PLAN_REQUIRED: "ساخت آلبوم به اشتراک حرفه‌ای یا ویژه نیاز دارد.",
   MEDIA_PROCESSING_FAILED: "پردازش عکس انجام نشد؛ عکس دیگری انتخاب کنید.",

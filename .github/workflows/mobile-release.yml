@@ -41,7 +41,7 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Test photo uploads
-        run: node --test scripts/test-media.mjs scripts/test-api-security.mjs
+        run: node --test scripts/test-media.mjs scripts/test-api-security.mjs scripts/test-billing.mjs
       - name: Lint
         run: npm run lint
 
