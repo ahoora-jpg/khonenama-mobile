@@ -11,6 +11,7 @@ export default function OwnerDashboard() {
       <View style={styles.modeBar}><Text style={styles.modeTitle}>حالت کسب‌وکار</Text><Pressable onPress={() => router.replace("/")}><Text style={styles.switch}>تغییر به حالت مشتری</Text></Pressable></View>
       <View style={styles.hero}><Text style={styles.eyebrow}>سلام {profile?.owner.fullName || "مدیر کسب‌وکار"}</Text><Text style={styles.title}>{profile?.business.name || "مدیریت کسب‌وکار"}</Text><Text style={styles.subtitle}>درخواست‌هایی که مشتریان از سایت خونه‌نما می‌فرستند اینجا قابل پیگیری هستند.</Text></View>
       <View style={styles.stats}>{stats.map(([label, value]) => <View key={label} style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>)}</View>
+      {profile?.business.moderation?.reason && <Text style={styles.subtitle}>دلیل وضعیت غرفه: {profile.business.moderation.reason}؛ اطلاعات را در پروفایل اصلاح کنید یا از پشتیبانی با موضوع اعتراض به وضعیت غرفه پیگیری کنید.</Text>}
       <Text style={styles.sectionTitle}>دسترسی سریع</Text>
       <View style={styles.actions}>
         <Action title="تصاویر و آلبوم‌ها" caption="عکاسی، آپلود و مدیریت نمونه‌کار" onPress={() => router.push("/owner/gallery")} />
