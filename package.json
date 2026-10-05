@@ -1,6 +1,6 @@
 {
   "name": "khonenama-mobile",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "main": "expo-router/entry",
   "dependencies": {
     "expo": "~57.0.26",
@@ -39,5 +39,8 @@
     "doctor": "expo-doctor",
     "validate:release": "node scripts/validate-release.mjs"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "decode-uri-component": "0.5.0"
+  }
 }

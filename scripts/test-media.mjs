@@ -6,8 +6,9 @@ import ts from 'typescript';
 const compile = file => ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 
 test('Multipart photo uploads preserve authentication and let the transport set its boundary', async () => {
+  const endpoint = {}; vm.runInNewContext(compile("src/api/endpoint.ts"), { exports: endpoint, URL });
   const exports = {}; let captured;
-  vm.runInNewContext(compile('src/api/client.ts'), { exports, process: { env: {} }, FormData, URLSearchParams, AbortController, setTimeout, clearTimeout,
+  vm.runInNewContext(compile('src/api/client.ts'), { exports, require: () => endpoint, process: { env: {} }, FormData, URLSearchParams, AbortController, setTimeout, clearTimeout,
     fetch: async (_url, options) => { captured = options; return Response.json({ ok: true }); },
   });
   const body = new FormData(); body.append('file', new Blob(['photo']), 'photo.jpg');

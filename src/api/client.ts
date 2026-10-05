@@ -1,4 +1,5 @@
 import type { BusinessDetail, BusinessSummary } from "../types";
+import { apiEndpoint } from "./endpoint";
 
 export const API_BASE = process.env.EXPO_PUBLIC_API_URL || "https://khonenama.ir";
 
@@ -47,7 +48,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, acc
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.body instanceof FormData ? 90_000 : 12_000);
   try {
-    const response = await fetch(API_BASE + path, {
+    const response = await fetch(apiEndpoint(API_BASE, path), {
       ...options,
       headers: {
         Accept: "application/json",
@@ -72,7 +73,7 @@ async function request<T>(path: string): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12_000);
   try {
-    const response = await fetch(API_BASE + path, { headers: { Accept: "application/json" }, signal: controller.signal });
+    const response = await fetch(apiEndpoint(API_BASE, path), { headers: { Accept: "application/json" }, signal: controller.signal });
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload?.ok) throw new Error(payload?.error || "REQUEST_FAILED");
     return payload.data as T;

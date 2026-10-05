@@ -86,7 +86,17 @@ export function BusinessSessionProvider({ children }: PropsWithChildren) {
     if (current) await apiRequest("/api/auth/logout", { method: "POST" }, current).catch(() => undefined);
   }, [token]);
 
-  const refresh = useCallback(async () => { if (token) await loadProfile(token); }, [loadProfile, token]);
+  const refresh = useCallback(async () => {
+    if (!token) return;
+    try { await loadProfile(token); }
+    catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setToken(null); setProfile(null);
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+      }
+      throw error;
+    }
+  }, [loadProfile, token]);
   const value = useMemo(() => ({ token, profile, loading, login, register, logout, refresh }), [token, profile, loading, login, register, logout, refresh]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
