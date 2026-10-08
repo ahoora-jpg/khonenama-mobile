@@ -82,6 +82,8 @@ export function BusinessSessionProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     const current = token;
+    if(current){const push=await SecureStore.getItemAsync("khonenama_registered_push_token").catch(()=>null);if(push)await apiRequest("/api/me/business/push-token",{method:"DELETE",body:JSON.stringify({token:push})},current).catch(()=>undefined);}
+    await SecureStore.deleteItemAsync("khonenama_registered_push_token").catch(()=>undefined);
     setToken(null); setProfile(null);
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     if (current) await apiRequest("/api/auth/logout", { method: "POST" }, current).catch(() => undefined);

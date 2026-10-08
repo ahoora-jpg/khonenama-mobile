@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Private push service-account credentials (never commit)
+*service-account*.json
+*firebase-adminsdk*.json
+credentials.json
+/google-services.json
+APP-PARITY-PROGRESS.md

@@ -19,3 +19,11 @@ export async function uploadBusinessPhoto(asset: ImagePickerAsset, token: string
     await FileSystem.deleteAsync(prepared.uri, { idempotent: true }).catch(() => undefined);
   }
 }
+export async function uploadBusinessVideo(asset: ImagePickerAsset, token:string) {
+ if(asset.duration != null && asset.duration > 20000)throw new Error("ویدیو باید حداکثر ۲۰ ثانیه باشد.");
+ if(asset.mimeType && asset.mimeType !== "video/mp4")throw new Error("فقط ویدیوی MP4 پذیرفته می‌شود.");
+ const info=await FileSystem.getInfoAsync(asset.uri);
+ if(!info.exists || info.size > 15*1024*1024)throw new Error("حداکثر حجم ویدیو ۱۵ مگابایت است.");
+ const body=new FormData();body.append("kind","video");body.append("file",{uri:asset.uri,name:"business-video.mp4",type:"video/mp4"} as unknown as Blob);
+ return apiRequest("/api/me/business/media/upload",{method:"POST",body},token);
+}

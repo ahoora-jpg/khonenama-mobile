@@ -1,20 +1,28 @@
 import { router } from "expo-router";
+import { useState } from "react";
+import { apiRequest } from "../../api/client";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../theme";
 import { useBusinessSession } from "../../auth/BusinessSessionContext";
 
+import { NotificationStatus } from "../../notifications/BusinessNotifications";
+
 export default function OwnerDashboard() {
-  const { profile, logout } = useBusinessSession();
+  const { token, profile, logout, refresh } = useBusinessSession();
+  const [publishing,setPublishing]=useState(false),[publishMessage,setPublishMessage]=useState("");
+  async function publish(){setPublishing(true);setPublishMessage("");try{await apiRequest("/api/me/business",{method:"PATCH",body:JSON.stringify({action:"publish"})},token);await refresh();setPublishMessage("غرفه منتشر شد و مشتری می‌تواند آن را ببیند.");}catch(e){setPublishMessage(e instanceof Error?e.message:"انتشار انجام نشد.");}finally{setPublishing(false);}}
   const stats = [["درخواست‌های دریافتی", String(profile?.business.leadCount ?? 0)], ["تکمیل پروفایل", `${profile?.business.completion ?? 0}٪`], ["وضعیت", profile?.business.verification_status === "verified" ? "تأییدشده" : "در انتظار تأیید"]];
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <View style={styles.modeBar}><Text style={styles.modeTitle}>حالت کسب‌وکار</Text><Pressable onPress={() => router.replace("/")}><Text style={styles.switch}>تغییر به حالت مشتری</Text></Pressable></View>
+      <View style={styles.modeBar}><Text style={styles.modeTitle}>حالت کسب‌وکار</Text><Pressable onPress={() => router.push("/customer-home")}><Text style={styles.switch}>تغییر به حالت مشتری</Text></Pressable></View>
       <View style={styles.hero}><Text style={styles.eyebrow}>سلام {profile?.owner.fullName || "مدیر کسب‌وکار"}</Text><Text style={styles.title}>{profile?.business.name || "مدیریت کسب‌وکار"}</Text><Text style={styles.subtitle}>درخواست‌هایی که مشتریان از سایت خونه‌نما می‌فرستند اینجا قابل پیگیری هستند.</Text></View>
+      <Action title="غرفه شما از نگاه مشتری" caption="ابتدا کاور، پروفایل و نمونه‌کارها را ببینید و ویرایش کنید" onPress={() => router.push("/owner/gallery")} />
       <View style={styles.stats}>{stats.map(([label, value]) => <View key={label} style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>)}</View>
       {profile?.business.moderation?.reason && <Text style={styles.subtitle}>دلیل وضعیت غرفه: {profile.business.moderation.reason}؛ اطلاعات را در پروفایل اصلاح کنید یا از پشتیبانی با موضوع اعتراض به وضعیت غرفه پیگیری کنید.</Text>}
+      <View style={styles.action}><Text style={styles.actionTitle}>وضعیت انتشار: {profile?.business.status === "published" ? "منتشرشده" : profile?.business.status === "draft" ? "پیش‌نویس" : "نیازمند بررسی"}</Text>{profile?.business.status === "draft" && <><Text style={styles.actionCaption}>نام، معرفی، شهر، خدمات و محدوده فعالیت را تکمیل کنید؛ سپس غرفه را منتشر کنید.</Text><Pressable disabled={publishing} onPress={()=>void publish()}><Text style={styles.switch}>{publishing ? "در حال انتشار…" : "انتشار غرفه"}</Text></Pressable></>}{!!publishMessage&&<Text accessibilityRole="alert" style={styles.actionCaption}>{publishMessage}</Text>}</View><NotificationStatus/>
       <Text style={styles.sectionTitle}>دسترسی سریع</Text>
       <View style={styles.actions}>
-        <Action title="تصاویر و آلبوم‌ها" caption="عکاسی، آپلود و مدیریت نمونه‌کار" onPress={() => router.push("/owner/gallery")} />
+        <Action title="عکس، ویدیو و آلبوم‌ها" caption="عکاسی، آپلود و مدیریت نمونه‌کار" onPress={() => router.push("/owner/gallery")} />
         <Action title="لینک و کد تصویری" caption="اشتراک‌گذاری گالری با مشتری" onPress={() => router.push("/owner/public-link")} />
         <Action title="اشتراک" caption="اعتبار و ظرفیت امکانات" onPress={() => router.push("/owner/subscription")} />
         <Action title="خدمات و ساعت کاری" caption="انتخاب خدمات واقعی و روزهای فعالیت" onPress={() => router.push("/owner/services")} />

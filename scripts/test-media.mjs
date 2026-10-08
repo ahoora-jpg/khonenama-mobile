@@ -32,3 +32,17 @@ for (const failing of [false, true]) test(`Phone images resize without distortio
   assert.equal(resized[0].width, 1920); assert.equal(resized[0].height, null);
   assert.equal(file.type, 'image/jpeg'); assert.deepEqual(deleted, ['file:///cache/prepared.jpg']);
 });
+for (const [name,asset,size,ok] of [
+ ['valid MP4',{uri:'file:///video.mp4',duration:20000,mimeType:'video/mp4'},15*1024*1024,true],
+ ['too long',{uri:'file:///video.mp4',duration:20001,mimeType:'video/mp4'},100,false],
+ ['wrong type',{uri:'file:///video.mov',duration:1000,mimeType:'video/quicktime'},100,false],
+ ['too large',{uri:'file:///video.mp4',duration:1000,mimeType:'video/mp4'},15*1024*1024+1,false],
+]) test(`Video upload ${name}`,async()=>{
+ const exports={};let calls=0;let payload;
+ vm.runInNewContext(compile('src/media/upload.ts'),{exports,FormData:class{constructor(){this.entries=[];}append(key,value){this.entries.push([key,value]);}},require:name=>name==='expo-file-system/legacy'?{getInfoAsync:async()=>({exists:true,size})}:name==='expo-image-manipulator'?{}:{apiRequest:async(path,options,token)=>{calls++;payload=options.body;assert.equal(path,'/api/me/business/media/upload');assert.equal(token,'owner');return {ok:true};}}});
+ const action=()=>exports.uploadBusinessVideo(asset,'owner');
+ if(ok){await action();assert.equal(calls,1);assert.equal(payload.entries[0][1],'video');assert.equal(payload.entries[1][1].type,'video/mp4');}
+ else{await assert.rejects(action());assert.equal(calls,0);}
+});
+
+test('Owner media credentials are sent only to the official HTTPS media path',()=>{const exports={};vm.runInNewContext(compile('src/media/source.ts'),{exports,URL,require:()=>({API_BASE:'https://khonenama.ir'})});assert.equal(exports.ownerMediaSource('https://khonenama.ir/media/businesses/1/photo.jpg','owner').headers.Authorization,'Bearer owner');for(const uri of ['https://evil.example/photo.jpg','http://khonenama.ir/media/businesses/1/a.jpg','https://khonenama.ir/other','file:///photo.jpg'])assert.equal(exports.ownerMediaSource(uri,'owner').headers,undefined);});

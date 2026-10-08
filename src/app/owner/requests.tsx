@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { AppState, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { apiRequest } from "../../api/client";
 import { useBusinessSession } from "../../auth/BusinessSessionContext";
 import { ScreenState } from "../../components/ScreenState";
@@ -26,6 +26,7 @@ export default function RequestsScreen() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [token]);
+  useEffect(()=>{const listener=AppState.addEventListener("change",state=>{if(state==="active")void load();});return()=>listener.remove();},[load]);
   if (loading) return <ScreenState title="در حال دریافت درخواست‌ها" message="کمی صبر کنید…" />;
   if (error) return <ScreenState title="ارتباط برقرار نشد" message={error} onRetry={() => { setLoading(true); void load(); }} />;
   return <View style={styles.page}><FlatList data={data} keyExtractor={(item) => String(item.id)} refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />} contentContainerStyle={styles.list} renderItem={({ item }) => <Pressable style={styles.card} onPress={() => router.push(`/owner/request/${item.id}`)}>
