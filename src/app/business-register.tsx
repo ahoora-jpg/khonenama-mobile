@@ -14,7 +14,7 @@ const errors: Record<string, string> = { PHONE_IN_USE: "این شماره قبل
 
 export default function BusinessRegisterScreen() {
   const { register } = useBusinessSession();
-  const [form, setForm] = useState({ ownerName: "", phone: "", password: "", businessName: "", city: "", area: "", description: "" });
+  const [form, setForm] = useState({ ownerName: "", phone: "", password: "", businessName: "", city: "", area: "", coverageNote: "", description: "" });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([categories[0].slug]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -46,6 +46,7 @@ export default function BusinessRegisterScreen() {
     <Field label="رمز عبور" value={form.password} onChangeText={set("password")} secureTextEntry placeholder="حداقل ۸ حرف" />
     <Field label="نام کسب‌وکار" value={form.businessName} onChangeText={set("businessName")} placeholder="مثلاً پرده‌سرای ..." />
     <Field label="شهر" value={form.city} onChangeText={set("city")} placeholder="نام شهر" /><Field label="محله یا محدوده خدمت" value={form.area} onChangeText={set("area")} placeholder="نام محله یا محدوده" />
+    <Field label="توضیح محدوده خدمات (اختیاری)" value={form.coverageNote} onChangeText={set("coverageNote")} multiline maxLength={500} placeholder="مثلاً خدمات در سراسر ایران و عمان" />
     <Text style={styles.label}>دسته‌های کسب‌وکار</Text><View style={styles.chips}>{categories.map(item => <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selectedCategories.includes(item.slug) }} key={item.slug} onPress={() => toggleCategory(item.slug)} style={[styles.chip, selectedCategories.includes(item.slug) && styles.chipActive]}><Text style={[styles.chipText, selectedCategories.includes(item.slug) && styles.chipTextActive]}>{item.label}</Text></Pressable>)}</View>
     <Text style={styles.label}>خدماتی که ارائه می‌دهید</Text><ServiceGroupChoices services={availableServices} selected={selectedServices} disabled={busy} onToggle={service=>setSelectedServices(v=>v.includes(service)?v.filter(x=>x!==service):[...v,service])}/>
     <Field label="معرفی کوتاه کسب‌وکار" value={form.description} onChangeText={set("description")} multiline numberOfLines={4} placeholder="خدمات، سابقه و مزیت کسب‌وکارتان را بنویسید…" />
