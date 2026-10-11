@@ -1,0 +1,27 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint && npm run typecheck
+      - name: Check private Android configuration
+        env:
+          ANDROID_CONFIG: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          test -n "$EXPO_TOKEN" || (echo "Missing EXPO_TOKEN build secret" && exit 1)
+          test -n "$ANDROID_CONFIG" || (echo "Missing GOOGLE_SERVICES_JSON build secret" && exit 1)
+          printf '%s' "$ANDROID_CONFIG" > google-services.json
+          npm run validate:release
+      - name: Submit APK build to EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --no-wait
