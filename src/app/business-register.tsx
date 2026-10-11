@@ -14,7 +14,7 @@ const errors: Record<string, string> = { PHONE_IN_USE: "این شماره قبل
 
 export default function BusinessRegisterScreen() {
   const { register } = useBusinessSession();
-  const [form, setForm] = useState({ ownerName: "", phone: "", password: "", businessName: "", city: "", area: "", coverageNote: "", description: "" });
+  const [form, setForm] = useState({ ownerName: "", phone: "", email:"", password: "", businessName: "", city: "", area: "", coverageNote: "", description: "" });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([categories[0].slug]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -32,7 +32,7 @@ export default function BusinessRegisterScreen() {
     if (!selectedCategories.length || !selectedServices.length) { setError("حداقل یک دسته و یک خدمت واقعی انتخاب کنید."); return; }
     if (!form.ownerName.trim() || !form.businessName.trim() || !form.city.trim() || !/^09\d{9}$/.test(phone) || form.password.length < 8 || form.description.trim().length < 20) { setError("همه موارد را کامل کنید؛ معرفی کسب‌وکار باید حداقل ۲۰ حرف باشد."); return; }
     setBusy(true); setError("");
-    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() ? `${form.city.trim()} / ${form.area.trim()}` : `تمام ${form.city.trim()}`], businessType: "store" }); router.replace("/owner/gallery"); }
+    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), email: form.email.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() ? `${form.city.trim()} / ${form.area.trim()}` : `تمام ${form.city.trim()}`], businessType: "store" }); router.replace("/owner/gallery"); }
     catch (e) { const code = e instanceof ApiError ? e.code : ""; setError(errors[code] || (e instanceof Error ? e.message : "ثبت انجام نشد.")); }
     finally { setBusy(false); }
   }
@@ -43,6 +43,7 @@ export default function BusinessRegisterScreen() {
 ویژه: ۷۰ عکس + ۵ ویدیو؛ ۳۵۰ هزار تومان / ۳۰ روز
 همه ابتدا با پایه رایگان ثبت‌نام می‌کنند. ویدیو: MP4، حداکثر ۲۰ ثانیه و ۱۵ مگابایت.</Text></View><Field label="نام و نام خانوادگی مدیر" value={form.ownerName} onChangeText={set("ownerName")} placeholder="نام صاحب کسب‌وکار" />
     <Field label="شماره موبایل" value={form.phone} onChangeText={set("phone")} keyboardType="phone-pad" placeholder="09123456789" />
+    <Field label="ایمیل حساب (اختیاری؛ برای بازیابی رمز دقیق وارد کنید)" value={form.email} onChangeText={set("email")} keyboardType="email-address" placeholder="name@example.com" />
     <Field label="رمز عبور" value={form.password} onChangeText={set("password")} secureTextEntry placeholder="حداقل ۸ حرف" />
     <Field label="نام کسب‌وکار" value={form.businessName} onChangeText={set("businessName")} placeholder="مثلاً پرده‌سرای ..." />
     <Field label="شهر" value={form.city} onChangeText={set("city")} placeholder="نام شهر" /><Field label="محله یا محدوده خدمت" value={form.area} onChangeText={set("area")} placeholder="نام محله یا محدوده" />

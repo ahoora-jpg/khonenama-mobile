@@ -11,12 +11,13 @@ import { toolStyles as s } from "../components/OwnerTools";
 let status="در حال بررسی اعلان…";
 const listeners=new Set<()=>void>();
 let retry:()=>void=()=>{};
+let testPush:()=>void=()=>{};
 function report(value:string){status=value;listeners.forEach(fn=>fn());}
 function subscribe(fn:()=>void){listeners.add(fn);return()=>{listeners.delete(fn);};}
 Notifications.setNotificationHandler({handleNotification:async()=>({shouldPlaySound:true,shouldSetBadge:false,shouldShowBanner:true,shouldShowList:true})});
 export function NotificationStatus(){
  const value=useSyncExternalStore(subscribe,()=>status,()=>status);
- return <View style={s.panel}><Text style={s.title}>اعلان درخواست مشتری</Text><Text accessibilityLiveRegion="polite" style={s.text}>{value}</Text><Pressable onPress={()=>retry()}><Text style={s.text}>بررسی دوباره اتصال اعلان</Text></Pressable><Pressable onPress={()=>void Linking.openSettings()}><Text style={s.text}>تنظیمات اجازه اعلان گوشی</Text></Pressable></View>;
+ return <View style={s.panel}><Text style={s.title}>اعلان درخواست مشتری</Text><Text accessibilityLiveRegion="polite" style={s.text}>{value}</Text><Pressable onPress={()=>retry()}><Text style={s.text}>بررسی دوباره اتصال اعلان</Text></Pressable><Pressable onPress={()=>testPush()}><Text style={s.text}>ارسال اعلان آزمایشی</Text></Pressable><Pressable onPress={()=>void Linking.openSettings()}><Text style={s.text}>تنظیمات اجازه اعلان گوشی</Text></Pressable></View>;
 }
 export function BusinessNotifications(){
  const {token}=useBusinessSession();
@@ -26,7 +27,8 @@ export function BusinessNotifications(){
   function open(notification:Notifications.Notification){const id=notification.request.identifier;if(seen.has(id))return;seen.add(id);const url=notification.request.content.data?.url;if(typeof url==="string"&&/^\/owner(?:\/|$)/.test(url))router.push(url as never);}
   const last=Notifications.getLastNotificationResponse();if(last?.notification)open(last.notification);
   const subscription=Notifications.addNotificationResponseReceivedListener(response=>open(response.notification));
-  return()=>subscription.remove();
+  const received=Notifications.addNotificationReceivedListener(notification=>{if(notification.request.content.data?.test===true)report("اعلان آزمایشی روی این گوشی دریافت شد.");});
+  return()=>{subscription.remove();received.remove();};
  },[token]);
  useEffect(()=>{
   if(!token){report("برای اتصال اعلان وارد حساب کسب‌وکار شوید.");return;}
@@ -52,10 +54,11 @@ export function BusinessNotifications(){
    finally{busy=false;}
   }
   retry=()=>void register();void register();
+  testPush=()=>{if(busy)return;busy=true;void(async()=>{try{const pushToken=await SecureStore.getItemAsync("khonenama_registered_push_token");if(!pushToken)throw Error();await apiRequest("/api/me/business/notifications/test",{method:"POST",body:JSON.stringify({kind:"app",token:pushToken})},token);if(active)report("اعلان آزمون به سرویس ارسال شد؛ دریافت روی گوشی را بررسی کنید.");}catch{if(active)report("آزمون ارسال نشد؛ اتصال و اجازه اعلان را بررسی کنید و یک دقیقه بعد دوباره امتحان کنید.");}finally{busy=false;}})();};
   const app=AppState.addEventListener("change",state=>{if(state==="active")void register();});
   const rotation=Notifications.addPushTokenListener(()=>void register());
   const timer=setInterval(()=>void register(),5*60*1000);
-  return()=>{active=false;retry=()=>{};app.remove();rotation.remove();clearInterval(timer);};
+  return()=>{active=false;retry=()=>{};testPush=()=>{};app.remove();rotation.remove();clearInterval(timer);};
  },[token]);
  return null;
 }

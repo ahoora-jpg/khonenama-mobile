@@ -5,7 +5,7 @@ export type BusinessSummary = {
 };
 
 export type BusinessDetail = BusinessSummary & {
-  albums?: { id: number; title: string; description: string; project?: {service:string;materials:string;area:string}|null; media: { id: number; url: string; altText: string }[] }[];
+  albums?: { id: number; title: string; description: string; project?: {service:string;materials:string;area:string}|null; media: { id: number; url: string; altText: string; kind?: string }[] }[];
   address: string; phone: string; whatsapp: string; website: string; instagram: string;
   media: { id: number; kind: string; url: string; altText: string }[];
   hours: { weekday: number; opensAt: string; closesAt: string; isClosed: boolean }[];

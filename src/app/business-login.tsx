@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ApiError, normalizeIranPhone } from "../api/client";
 import { useBusinessSession } from "../auth/BusinessSessionContext";
 import { ErrorText, Field, SubmitButton } from "../components/AuthForm";
@@ -30,6 +30,7 @@ export default function BusinessLoginScreen() {
   return <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === "ios" ? "padding" : undefined}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <View style={styles.hero}><Text style={styles.kicker}>ویژه صاحبان کسب‌وکار</Text><Text style={styles.title}>مدیریت کسب‌وکار خونه‌نما</Text><Text style={styles.copy}>با همان شماره موبایل و رمزی که در سایت ساخته‌اید وارد شوید. قبل از ورود، هیچ اطلاعات مدیریتی نمایش داده نمی‌شود.</Text></View>
     <View style={styles.form}><Field label="شماره موبایل" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="09123456789" autoComplete="tel" /><Field label="رمز عبور" value={password} onChangeText={setPassword} placeholder="حداقل ۸ حرف" secureTextEntry autoComplete="password" /><ErrorText>{error}</ErrorText><SubmitButton title="ورود به مدیریت کسب‌وکار" busy={busy} onPress={submit} /></View>
+    <Pressable onPress={()=>void Linking.openURL("https://khonenama.ir/business/forgot-password").catch(()=>setError("صفحه بازیابی باز نشد؛ از سایت خونه‌نما وارد بازیابی رمز شوید."))}><Text style={styles.link}>بازیابی رمز از طریق ایمیل</Text></Pressable>
     <View style={styles.register}><Text style={styles.registerTitle}>هنوز کسب‌وکارت را ثبت نکرده‌ای؟</Text><Pressable onPress={() => router.push("/business-register")}><Text style={styles.link}>ساخت حساب و ثبت کسب‌وکار</Text></Pressable></View>
     <Pressable onPress={() => router.replace("/")}><Text style={styles.customer}>ورود به حالت مشتری</Text></Pressable>
   </ScrollView></KeyboardAvoidingView>;
