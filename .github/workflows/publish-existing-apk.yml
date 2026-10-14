@@ -1,0 +1,24 @@
+name: Publish verified existing Android APK
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify the finished Expo artifact
+        run: |
+          curl --fail --location --retry 2 --output khonenama-1.2.10.apk 'https://expo.dev/artifacts/eas/SRwC7ylzpaf2QyxWcS1DnlGFz9rJLg-jEsEbWtO4gn0.apk'
+          echo '76151557dafbf5956e68b10fd9712230df960f56b8749f0aed8492dd998decec  khonenama-1.2.10.apk' | sha256sum --check
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --print-certs khonenama-1.2.10.apk
+          "$tools/aapt" dump badging khonenama-1.2.10.apk | head -1 | grep "name='ir.khonenama.app'.*versionCode='15'.*versionName='1.2.10'"
+      - name: Publish durable testing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-1.2.10 || gh release create android-1.2.10 --prerelease --title 'Android 1.2.10 — testing release' --notes 'Expo EAS APK, versionCode 15. Actual handset notification testing remains pending.'
+          gh release upload android-1.2.10 khonenama-1.2.10.apk --clobber
