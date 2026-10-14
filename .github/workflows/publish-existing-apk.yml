@@ -16,9 +16,25 @@ jobs:
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$tools/apksigner" verify --print-certs khonenama-1.2.10.apk
           "$tools/aapt" dump badging khonenama-1.2.10.apk | head -1 | grep "name='ir.khonenama.app'.*versionCode='15'.*versionName='1.2.10'"
+      - name: Align with existing production installation signature
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/khonenama-production.jks"
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/khonenama-production.jks" --ks-key-alias "$ANDROID_KEY_ALIAS" --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD --out khonenama-compatible.apk khonenama-1.2.10.apk
+          "$tools/apksigner" verify --print-certs khonenama-compatible.apk | tee signature.txt
+          grep -qi '451f3fe27480d2e5ea49035e43343c03380a1aa302f2e9d9ce5017e3f3ffee8d' signature.txt
+          mv khonenama-compatible.apk khonenama-1.2.10.apk
+          sha256sum khonenama-1.2.10.apk > khonenama-1.2.10.apk.sha256
+          rm "$RUNNER_TEMP/khonenama-production.jks"
       - name: Publish durable testing release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view android-1.2.10 || gh release create android-1.2.10 --prerelease --title 'Android 1.2.10 — testing release' --notes 'Expo EAS APK, versionCode 15. Actual handset notification testing remains pending.'
-          gh release upload android-1.2.10 khonenama-1.2.10.apk --clobber
+          gh release upload android-1.2.10 khonenama-1.2.10.apk khonenama-1.2.10.apk.sha256 --clobber
