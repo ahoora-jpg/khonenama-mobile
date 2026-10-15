@@ -18,12 +18,13 @@ export default function OwnerGallery() {
   const [project,setProject]=useState({service:"",materials:"",area:""});
   const [editing, setEditing] = useState<number | null>(null), [alt, setAlt] = useState("");
   const plan = profile?.business.plan?.code || "free";
-  const capacity = plan === "premium" ? 70 : plan === "pro" ? 30 : 10;
+  const [serverCapacity,setServerCapacity]=useState<{photos:number;videos:number}|null>(null);
+  const capacity = serverCapacity?.photos ?? (plan === "premium" ? 70 : plan === "pro" ? 30 : 10);
   const [localPreview,setLocalPreview]=useState<{kind:"cover"|"logo";uri:string}|null>(null);
   const [editingAlbum, setEditingAlbum] = useState<number | null>(null);
   const [mediaSearch,setMediaSearch]=useState("");
   const albumMedia=media.filter(m=>(m.kind==="image"||m.kind==="video")&&(m.alt_text||"").includes(mediaSearch.trim()));
-  const videoCapacity=plan === "premium"?5:plan === "pro"?2:0;
+  const videoCapacity=serverCapacity?.videos ?? (plan === "premium"?5:plan === "pro"?2:0);
   const videoCount=media.filter(m=>m.kind==="video").length;
   const count = media.filter(m => m.kind === "image").length;
   const cover = media.find(m=>m.kind === "cover"), logo = media.find(m=>m.kind === "logo");
@@ -31,10 +32,10 @@ export default function OwnerGallery() {
   const chooseSource = (kind: "image" | "cover" | "logo") => Alert.alert("انتخاب عکس", "از گالری انتخاب کنید یا عکس بگیرید.", [{text:"گالری",onPress:()=>void pick(false,kind)},{text:"دوربین",onPress:()=>void pick(true,kind)},{text:"انصراف",style:"cancel"}]);
   const load = useCallback(async () => {
     const [m, a] = await Promise.all([
-      apiRequest<{ media: Media[] }>("/api/me/business/media", {}, token),
+      apiRequest<{ media: Media[];capacity?:{photos:number;videos:number} }>("/api/me/business/media", {}, token),
       apiRequest<{ albums: Album[]; limit: number | null }>("/api/me/business/albums", {}, token),
     ]);
-    setMedia(m.media); setAlbums(a.albums); setError("");
+    setMedia(m.media); setServerCapacity(m.capacity||null); setAlbums(a.albums); setError("");
   }, [token]);
   useEffect(() => { void Promise.resolve().then(load).catch(() => setError("دریافت تصاویر انجام نشد؛ دوباره تلاش کنید.")).finally(() => setLoading(false)); }, [load]);
   async function run(action: () => Promise<unknown>) {

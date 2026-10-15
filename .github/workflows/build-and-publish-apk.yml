@@ -1,0 +1,66 @@
+name: Build and publish current Android APK
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint && npm run typecheck && npm run validate:release
+      - run: node --test scripts/test-billing.mjs scripts/test-media.mjs
+      - name: Prepare private Firebase configuration
+        env:
+          ANDROID_CONFIG: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          test -n "$EXPO_TOKEN"
+          test -n "$ANDROID_CONFIG"
+          printf '%s' "$ANDROID_CONFIG" > google-services.json
+      - name: Build APK with EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --wait --json > "$RUNNER_TEMP/khonenama-build.json"
+      - name: Download matching finished artifact
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');const raw=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/khonenama-build.json','utf8'));const build=Array.isArray(raw)?raw[0]:raw;
+          if(build.status!=='FINISHED'||build.gitCommitHash!==process.env.GITHUB_SHA)throw Error('Build is not finished or does not match this source commit');
+          const url=new URL(build.artifacts?.buildUrl||build.artifacts?.applicationArchiveUrl);
+          if(url.protocol!=='https:'||url.hostname!=='expo.dev')throw Error('Unexpected artifact host');
+          fs.appendFileSync(process.env.GITHUB_ENV,'APK_URL='+url.href+'\nAPP_VERSION='+require('./package.json').version+'\n');
+          NODE
+          curl --fail --location --retry 3 --output khonenama-eas.apk "$APK_URL"
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify khonenama-eas.apk
+          "$tools/aapt" dump badging khonenama-eas.apk | head -1 > package.txt
+          grep "name='ir.khonenama.app'.*versionName='$APP_VERSION'" package.txt
+          node -e "const s=require('fs').readFileSync('package.txt','utf8');if(Number(s.match(/versionCode='(\d+)'/)[1])<=15)throw Error('Version code must upgrade existing app')"
+      - name: Sign with existing production identity
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/khonenama-production.jks"
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/khonenama-production.jks" --ks-key-alias "$ANDROID_KEY_ALIAS" --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD --out "khonenama-$APP_VERSION.apk" khonenama-eas.apk
+          "$tools/apksigner" verify --print-certs "khonenama-$APP_VERSION.apk" | tee signature.txt
+          grep -qi '451f3fe27480d2e5ea49035e43343c03380a1aa302f2e9d9ce5017e3f3ffee8d' signature.txt
+          sha256sum "khonenama-$APP_VERSION.apk" > "khonenama-$APP_VERSION.apk.sha256"
+      - name: Publish download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "android-$APP_VERSION" || gh release create "android-$APP_VERSION" --prerelease --title "Android $APP_VERSION" --notes-file store/release-notes/fa-IR/default.txt
+          gh release upload "android-$APP_VERSION" "khonenama-$APP_VERSION.apk" "khonenama-$APP_VERSION.apk.sha256" --clobber
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/khonenama-production.jks"

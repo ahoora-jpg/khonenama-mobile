@@ -69,7 +69,7 @@ export default function OwnerProfile() {
       <Field label="نشانی" value={form.address} onChangeText={(value) => update("address", value)} multiline />
       <Field label="وب‌سایت" value={form.website} onChangeText={(value) => update("website", value)} autoCapitalize="none" keyboardType="url" />
       <Field label="اینستاگرام" value={form.instagram} onChangeText={(value) => update("instagram", value)} autoCapitalize="none" />
-      <Field label="معرفی کسب‌وکار" value={form.description} onChangeText={(value) => update("description", value)} multiline />
+      <Field label="معرفی کسب‌وکار و شرایط همکاری" value={form.description} onChangeText={(value) => update("description", value)} multiline />
       <Text style={styles.label}>خدمات ثبت‌شده</Text><View style={styles.tags}>{services.length ? services.map((service) => <Text key={service.id} style={styles.tag}>{service.name}</Text>) : <Text style={styles.empty}>هنوز خدمتی ثبت نشده است.</Text>}</View>
       <Pressable accessibilityRole="button" disabled={saving} style={[styles.button, saving && styles.disabled]} onPress={() => void save()}><Text style={styles.buttonText}>{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</Text></Pressable>
     </View>

@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ApiError, normalizeIranPhone } from "../api/client";
 import { useBusinessSession } from "../auth/BusinessSessionContext";
 import { ErrorText, Field, SubmitButton } from "../components/AuthForm";
@@ -17,6 +17,7 @@ export default function BusinessRegisterScreen() {
   const [form, setForm] = useState({ ownerName: "", phone: "", email:"", password: "", businessName: "", city: "", area: "", coverageNote: "", description: "" });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([categories[0].slug]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [businessType,setBusinessType]=useState("store");
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const availableServices = categories.filter(c => selectedCategories.includes(c.slug)).flatMap(c => [...c.services]);
   function toggleCategory(slug: string) {
@@ -32,20 +33,20 @@ export default function BusinessRegisterScreen() {
     if (!selectedCategories.length || !selectedServices.length) { setError("حداقل یک دسته و یک خدمت واقعی انتخاب کنید."); return; }
     if (!form.ownerName.trim() || !form.businessName.trim() || !form.city.trim() || !/^09\d{9}$/.test(phone) || form.password.length < 8 || form.description.trim().length < 20) { setError("همه موارد را کامل کنید؛ معرفی کسب‌وکار باید حداقل ۲۰ حرف باشد."); return; }
     setBusy(true); setError("");
-    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), email: form.email.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() ? `${form.city.trim()} / ${form.area.trim()}` : `تمام ${form.city.trim()}`], businessType: "store" }); router.replace("/owner/gallery"); }
+    try { await register({ ...form, phone, ownerName: form.ownerName.trim(), email: form.email.trim(), businessName: form.businessName.trim(), city: form.city.trim(), area: form.area.trim(), description: form.description.trim(), categories: selectedCategories, services: selectedServices, serviceAreas: [form.area.trim() ? `${form.city.trim()} / ${form.area.trim()}` : `تمام ${form.city.trim()}`], businessType }); router.replace("/owner/gallery"); }
     catch (e) { const code = e instanceof ApiError ? e.code : ""; setError(errors[code] || (e instanceof Error ? e.message : "ثبت انجام نشد.")); }
     finally { setBusy(false); }
   }
   return <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === "ios" ? "padding" : undefined}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <Text style={styles.title}>ساخت حساب و ثبت کسب‌وکار</Text><Text style={styles.intro}>این حساب در سایت و اپ یکی است. بعد از ثبت، درخواست‌های مشتریان سایت را همین‌جا دریافت و مدیریت می‌کنید.</Text>
-    <View style={styles.chips}><Text style={styles.intro}>پایه رایگان: ۱۰ عکس + کاور و پروفایل
+    <View>{["free","pro","premium","custom"].map(code=><Image key={code} source={{uri:`https://khonenama.ir/images/plans/${code}-20261015.webp`}} style={{width:"100%",aspectRatio:1,marginBottom:12}} accessibilityLabel={`معرفی پلن ${code}`}/>)}</View><View style={styles.chips}><Text style={styles.intro}>پایه رایگان: ۱۰ عکس + کاور و پروفایل
 حرفه‌ای: ۳۰ عکس + ۲ ویدیو؛ ۲۵۰ هزار تومان / ۳۰ روز
 ویژه: ۷۰ عکس + ۵ ویدیو؛ ۳۵۰ هزار تومان / ۳۰ روز
-همه ابتدا با پایه رایگان ثبت‌نام می‌کنند. ویدیو: MP4، حداکثر ۲۰ ثانیه و ۱۵ مگابایت.</Text></View><Field label="نام و نام خانوادگی مدیر" value={form.ownerName} onChangeText={set("ownerName")} placeholder="نام صاحب کسب‌وکار" />
+همه ابتدا با پایه رایگان ثبت‌نام می‌کنند. افزونه فقط ویژه است: هر بسته ۲۰ عکس و ۱ ویدیو، ماهانه ۱۵ هزار تومان. فایل‌های اضافه ۳۰ روز پس از انقضا نگهداری و سپس حذف می‌شوند؛ ۱۰ عکس اول، کاور و پروفایل باقی می‌مانند. ویدیو: MP4، حداکثر ۲۰ ثانیه و ۱۵ مگابایت.</Text></View><Field label="نام و نام خانوادگی مدیر" value={form.ownerName} onChangeText={set("ownerName")} placeholder="نام صاحب کسب‌وکار" />
     <Field label="شماره موبایل" value={form.phone} onChangeText={set("phone")} keyboardType="phone-pad" placeholder="09123456789" />
     <Field label="ایمیل حساب (اختیاری؛ برای بازیابی رمز دقیق وارد کنید)" value={form.email} onChangeText={set("email")} keyboardType="email-address" placeholder="name@example.com" />
     <Field label="رمز عبور" value={form.password} onChangeText={set("password")} secureTextEntry placeholder="حداقل ۸ حرف" />
-    <Field label="نام کسب‌وکار" value={form.businessName} onChangeText={set("businessName")} placeholder="مثلاً پرده‌سرای ..." />
+    <Text style={styles.label}>نوع فعالیت</Text><View style={styles.chips}>{[["store","فروشگاه"],["company","شرکت طراحی یا خدمات"],["individual","نصاب / مجری / متخصص مستقل"]].map(([key,label])=><Pressable key={key} onPress={()=>setBusinessType(key)} accessibilityRole="button" accessibilityState={{selected:businessType===key}} style={{padding:12,borderWidth:1,borderColor:businessType===key?colors.green:colors.line,borderRadius:12}}><Text style={styles.intro}>{label}</Text></Pressable>)}</View><Field label="نام کسب‌وکار یا نام حرفه‌ای شما" value={form.businessName} onChangeText={set("businessName")} placeholder="نام فروشگاه یا نام شما برای ارائه خدمات" />
     <Field label="شهر" value={form.city} onChangeText={set("city")} placeholder="نام شهر" /><Field label="محله یا محدوده خدمت" value={form.area} onChangeText={set("area")} placeholder="نام محله یا محدوده" />
     <Field label="توضیح محدوده خدمات (اختیاری)" value={form.coverageNote} onChangeText={set("coverageNote")} multiline maxLength={500} placeholder="مثلاً خدمات در سراسر ایران و عمان" />
     <Text style={styles.label}>دسته‌های کسب‌وکار</Text><View style={styles.chips}>{categories.map(item => <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selectedCategories.includes(item.slug) }} key={item.slug} onPress={() => toggleCategory(item.slug)} style={[styles.chip, selectedCategories.includes(item.slug) && styles.chipActive]}><Text style={[styles.chipText, selectedCategories.includes(item.slug) && styles.chipTextActive]}>{item.label}</Text></Pressable>)}</View>
