@@ -5,7 +5,7 @@ import { colors } from "../theme";
 
 const categories = [
   ["curtain", "پرده", "▥"], ["flooring", "کفپوش", "▤"], ["carpet", "موکت", "▦"],
-  ["wallpaper", "کاغذ دیواری", "▧"], ["interior-design", "طراحی داخلی", "◇"], ["smart-home", "خانه هوشمند", "⌂"],
+  ["wallpaper", "کاغذ دیواری", "▧"], ["interior-design", "طراحی داخلی", "◇"], ["smart-home", "خانه هوشمند", "⌂"], ["lighting", "نورپردازی داخلی", "☀"],
 ];
 
 export default function HomeScreen() {

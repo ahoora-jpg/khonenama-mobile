@@ -26,7 +26,7 @@ export default function BusinessScreen() {
       <View style={styles.panel}>
         <Text style={styles.title}>{business.name}</Text>
         <Text style={styles.location}>{[business.area, business.city].filter(Boolean).join("، ")}</Text>
-        <Text style={styles.description}>{business.description}</Text>
+        <Text style={styles.sectionTitle}>معرفی و شرایط همکاری</Text><Text style={styles.description}>{business.description}</Text>
         <View style={styles.tags}>{business.services.slice(0, 6).map((service) => <Text key={service} style={styles.tag}>{service}</Text>)}</View>
         {business.address ? <Text style={styles.address}>نشانی: {business.address}</Text> : null}
         <View style={styles.actions}>
@@ -34,7 +34,7 @@ export default function BusinessScreen() {
           {business.whatsapp ? <Pressable style={styles.secondary} onPress={() => Linking.openURL(`https://wa.me/${business.whatsapp.replace(/\D/g, "").replace(/^0/, "98")}`)}><Text style={styles.secondaryText}>واتساپ</Text></Pressable> : null}
         </View>
       </View>
-      {business.media?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>گالری نمونه‌کار</Text>{business.media.map(item => <View key={item.id}><Image source={{ uri: item.url }} style={{ width: "100%", height: 230, marginTop: 12, borderRadius: 12 }} resizeMode="contain" accessibilityLabel={item.altText || "نمونه‌کار"} />{item.altText ? <Text style={styles.description}>{item.altText}</Text> : null}</View>)}</View> : null}
+      {business.media?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>گالری نمونه‌کار</Text>{business.media.filter(item=>item.kind==='image'||item.kind==='video').map(item => <View key={item.id}><BusinessMediaPreview uri={item.url} kind={item.kind} label={item.altText||"نمونه‌کار"} />{item.altText ? <Text style={styles.description}>{item.altText}</Text> : null}</View>)}</View> : null}
       {business.albums?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>آلبوم‌های پروژه</Text>{business.albums.map(album => <View key={album.id}><Pressable accessibilityRole="button" onPress={() => setOpenAlbum(openAlbum === album.id ? null : album.id)}><Text style={styles.description}>{album.title} · {album.media.length} تصویر</Text></Pressable>{openAlbum === album.id && <><Text style={styles.description}>{album.description}</Text>{album.project && <Text style={styles.description}>{[album.project.service,album.project.materials,album.project.area].filter(Boolean).join(" · ")}</Text>}{album.media.map(item => item.kind === "video" ? <BusinessMediaPreview key={item.id} uri={item.url} video label={item.altText || album.title}/> : <Image key={item.id} source={{ uri: item.url }} style={{ height: 220, marginTop: 12 }} resizeMode="contain" accessibilityLabel={item.altText || album.title} />)}</>}</View>)}</View> : null}
       {business.hours?.length ? <View style={styles.panel}><Text style={styles.sectionTitle}>ساعت کاری</Text>{business.hours.map(h => <Text key={h.weekday} style={styles.description}>{["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"][h.weekday]}: {h.isClosed ? "تعطیل" : `${h.opensAt} تا ${h.closesAt}`}</Text>)}</View> : null}
       <PublicCampaigns slug={business.slug}/><SavedBusiness slug={business.slug}/><BusinessQuote slug={business.slug} name={business.name} /><CustomerReview slug={business.slug}/><Pressable style={styles.panel} onPress={()=>router.push({pathname:"/support",params:{slug:business.slug}})}><Text style={styles.description}>گزارش مشکل این غرفه</Text></Pressable>
@@ -48,10 +48,10 @@ const styles = StyleSheet.create({
   coverPlaceholder: { height: 200, backgroundColor: colors.greenSoft, alignItems: "center", justifyContent: "center" }, placeholderText: { color: colors.green, fontSize: 24, fontWeight: "900" },
   panel: { backgroundColor: colors.white, margin: 16, marginBottom: 0, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: colors.line },
   title: { color: colors.ink, fontSize: 25, fontWeight: "900", textAlign: "right" }, location: { color: colors.green, textAlign: "right", marginTop: 6, fontWeight: "700" },
-  description: { color: colors.ink, textAlign: "right", lineHeight: 26, marginTop: 18 }, tags: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, marginTop: 16 },
+  description: { fontSize:16,color: colors.ink, textAlign: "right", lineHeight: 26, marginTop: 18 }, tags: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, marginTop: 16 },
   tag: { color: colors.green, backgroundColor: colors.greenSoft, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, overflow: "hidden" }, address: { textAlign: "right", color: colors.muted, lineHeight: 23, marginTop: 18 },
   actions: { flexDirection: "row-reverse", gap: 10, marginTop: 20 }, primary: { flex: 1, height: 48, backgroundColor: colors.green, borderRadius: 14, alignItems: "center", justifyContent: "center" }, primaryText: { color: colors.white, fontWeight: "900" },
   secondary: { flex: 1, height: 48, borderWidth: 1, borderColor: colors.green, borderRadius: 14, alignItems: "center", justifyContent: "center" }, secondaryText: { color: colors.green, fontWeight: "900" },
-  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: "900", textAlign: "right", marginBottom: 6 }, review: { paddingVertical: 14, borderBottomWidth: 1, borderColor: colors.line }, reviewTitle: { textAlign: "right", color: colors.gold, fontWeight: "800" }, reviewBody: { textAlign: "right", color: colors.ink, lineHeight: 23, marginTop: 6 },
+  sectionTitle: { color: colors.ink, fontSize: 20, fontWeight: "900", textAlign: "right", marginBottom: 6 }, review: { paddingVertical: 14, borderBottomWidth: 1, borderColor: colors.line }, reviewTitle: { textAlign: "right", color: colors.gold, fontWeight: "800" }, reviewBody: { fontSize:16,textAlign: "right", color: colors.ink, lineHeight: 23, marginTop: 6 },
   loader: { flex: 1, marginTop: 120 }, message: { color: colors.muted, textAlign: "center", marginTop: 100 },
 });

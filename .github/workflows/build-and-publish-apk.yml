@@ -36,6 +36,8 @@ jobs:
           if(url.protocol!=='https:'||url.hostname!=='expo.dev')throw Error('Unexpected artifact host');
           fs.appendFileSync(process.env.GITHUB_ENV,'APK_URL='+url.href+'\nAPP_VERSION='+require('./package.json').version+'\n');
           NODE
+      - name: Download and validate APK
+        run: |
           curl --fail --location --retry 3 --output khonenama-eas.apk "$APK_URL"
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$tools/apksigner" verify khonenama-eas.apk
